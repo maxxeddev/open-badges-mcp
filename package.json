@@ -1,0 +1,64 @@
+{
+  "name": "mcp-ob-ts",
+  "version": "0.1.0",
+  "description": "OB3 MCP Server — exposes Open Badges 3.0 vocabulary to coding agents",
+  "type": "module",
+  "main": "dist/cli.js",
+  "bin": {
+    "mcp-ob-ts": "dist/cli.js"
+  },
+  "files": [
+    "dist/",
+    "data/snapshots/",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "build": "tsup",
+    "typecheck": "tsc --noEmit",
+    "start": "node dist/cli.js",
+    "lint": "biome check src/ scripts/ tests/",
+    "lint:fix": "biome check --write src/ scripts/ tests/",
+    "format": "biome format --write src/ scripts/ tests/",
+    "test": "vitest --run",
+    "inspect": "npx @modelcontextprotocol/inspector node dist/cli.js",
+    "data:fetch": "tsx scripts/fetch-spec-data.ts",
+    "data:ingest": "tsx scripts/ingest-spec.ts",
+    "changeset": "changeset"
+  },
+  "keywords": [
+    "mcp",
+    "open-badges",
+    "ob3"
+  ],
+  "author": "",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20"
+  },
+  "packageManager": "pnpm@10.14.0",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "ajv": "^8.20.0",
+    "ajv-formats": "^3.0.1",
+    "cheerio": "^1.2.0",
+    "jsonld": "^9.0.0",
+    "n3": "^2.0.3",
+    "sql.js": "^1.14.1",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.4.15",
+    "@changesets/cli": "^2.31.0",
+    "@types/jsonld": "^1.5.15",
+    "@types/n3": "^1.26.1",
+    "@types/node": "^25.9.1",
+    "@types/sql.js": "^1.4.11",
+    "fast-check": "^4.8.0",
+    "tsup": "^8.5.1",
+    "tsx": "^4.22.3",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.7"
+  }
+}
