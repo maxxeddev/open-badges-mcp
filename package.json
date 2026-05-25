@@ -10,6 +10,7 @@
   "files": [
     "dist/",
     "data/snapshots/",
+    "data/index.db",
     "README.md",
     "LICENSE"
   ],
