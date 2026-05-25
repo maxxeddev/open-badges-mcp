@@ -47,9 +47,7 @@ describe("structured range shape", () => {
     expect(subj).toBeDefined();
     expect(subj.range.kind).toBe("union");
     if (subj.range.kind === "union") {
-      const names = subj.range.members.flatMap((m) =>
-        m.kind === "vocab-class" ? [m.name] : [],
-      );
+      const names = subj.range.members.flatMap((m) => (m.kind === "vocab-class" ? [m.name] : []));
       expect(names).toEqual(expect.arrayContaining(["AchievementSubject", "EndorsementSubject"]));
     }
   });

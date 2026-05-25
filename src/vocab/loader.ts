@@ -1,6 +1,6 @@
-import { Parser, type Quad_Object, Store } from "n3";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import { Parser, type Quad_Object, Store } from "n3";
 import { resolveSnapshotPath } from "../config.js";
 import type { ClassRecord, DomainEntry, Manifest, PropertyRecord, Vocab } from "./types.js";
 import { KNOWN_PREFIXES, type Range } from "./types.js";
@@ -100,7 +100,11 @@ function buildClassMap(store: Store, version: string): Map<string, ClassRecord> 
   return map;
 }
 
-function buildPropertyMap(store: Store, version: string, localClassNames: Set<string>): Map<string, PropertyRecord> {
+function buildPropertyMap(
+  store: Store,
+  version: string,
+  localClassNames: Set<string>,
+): Map<string, PropertyRecord> {
   const map = new Map<string, PropertyRecord>();
 
   const propQuads = [
@@ -124,7 +128,11 @@ function buildPropertyMap(store: Store, version: string, localClassNames: Set<st
   return map;
 }
 
-function getRangeStructured(store: Store, propertyIri: string, localClassNames: Set<string>): Range {
+function getRangeStructured(
+  store: Store,
+  propertyIri: string,
+  localClassNames: Set<string>,
+): Range {
   const rangeQuads = store.getQuads(propertyIri, `${RDFS}range`, null, null);
   if (rangeQuads.length === 0) {
     // No range declared — treat as external with the property's own IRI as fallback
