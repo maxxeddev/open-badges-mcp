@@ -31,7 +31,8 @@ describe("Property 2: get_property returns complete record with all domain entri
         expect(parsed.name.length).toBeGreaterThan(0);
         expect(typeof parsed.iri).toBe("string");
         expect(parsed.iri.length).toBeGreaterThan(0);
-        expect(typeof parsed.range).toBe("string");
+        expect(typeof parsed.range).toBe("object");
+        expect(parsed.range).toHaveProperty("kind");
         expect(typeof parsed.description).toBe("string");
         expect(Array.isArray(parsed.domain)).toBe(true);
       }),
