@@ -47,14 +47,15 @@ describe("Property 1: list_properties returns complete structured entries for va
     );
   });
 
-  it("each entry has a string `range` field", async () => {
+  it("each entry has an object `range` field with a `kind` discriminator", async () => {
     await fc.assert(
       fc.asyncProperty(classNameArb, async (className) => {
         const result = await handler({ class_name: className });
         const parsed = JSON.parse(result.content[0].text);
 
         for (const entry of parsed.properties) {
-          expect(typeof entry.range).toBe("string");
+          expect(typeof entry.range).toBe("object");
+          expect(entry.range).toHaveProperty("kind");
         }
       }),
     );

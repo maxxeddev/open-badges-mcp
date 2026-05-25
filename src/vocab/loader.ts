@@ -3,10 +3,39 @@ import { join } from "node:path";
 import { Parser, type Quad_Object, Store } from "n3";
 import { resolveSnapshotPath } from "../config.js";
 import type { ClassRecord, DomainEntry, Manifest, PropertyRecord, Vocab } from "./types.js";
+import { KNOWN_PREFIXES, type Range } from "./types.js";
 
 const RDF = "http://www.w3.org/1999/02/22-rdf-syntax-ns#";
 const RDFS = "http://www.w3.org/2000/01/rdf-schema#";
 const OWL = "http://www.w3.org/2002/07/owl#";
+
+function toCurie(iri: string): { curie?: string; label: string } {
+  for (const [ns, prefix] of Object.entries(KNOWN_PREFIXES)) {
+    if (iri.startsWith(ns)) {
+      const local = iri.slice(ns.length);
+      return { curie: `${prefix}:${local}`, label: local };
+    }
+  }
+  // Fallback: take fragment or last path segment as label
+  const tail = iri.includes("#") ? iri.split("#").pop()! : iri.split("/").pop()!;
+  return { label: tail || iri };
+}
+
+export function classifyRange(iri: string, localClassNames: Set<string>): Range {
+  // xsd primitive
+  if (iri.startsWith("http://www.w3.org/2001/XMLSchema#")) {
+    const { curie, label } = toCurie(iri);
+    return { kind: "datatype", iri, curie: curie!, label };
+  }
+  // local OB vocab class
+  const tail = iri.includes("#") ? iri.split("#").pop()! : iri.split("/").pop()!;
+  if (localClassNames.has(tail)) {
+    return { kind: "vocab-class", iri, name: tail };
+  }
+  // external (schema.org, vc, etc.)
+  const { curie, label } = toCurie(iri);
+  return { kind: "external", iri, curie, label };
+}
 
 export function loadVocab(version?: string): Vocab {
   const snapshotDir = resolveSnapshotPath(version);
@@ -18,7 +47,8 @@ export function loadVocab(version?: string): Vocab {
   store.addQuads(parser.parse(ttlContent));
 
   const classesByName = buildClassMap(store, manifest.version);
-  const propertiesByName = buildPropertyMap(store, manifest.version);
+  const localClassNames = new Set(classesByName.keys());
+  const propertiesByName = buildPropertyMap(store, manifest.version, localClassNames);
   attachPropertiesToClasses(classesByName, propertiesByName);
 
   return { classesByName, propertiesByName, version: manifest.version };
@@ -70,7 +100,11 @@ function buildClassMap(store: Store, version: string): Map<string, ClassRecord> 
   return map;
 }
 
-function buildPropertyMap(store: Store, version: string): Map<string, PropertyRecord> {
+function buildPropertyMap(
+  store: Store,
+  version: string,
+  localClassNames: Set<string>,
+): Map<string, PropertyRecord> {
   const map = new Map<string, PropertyRecord>();
 
   const propQuads = [
@@ -85,7 +119,7 @@ function buildPropertyMap(store: Store, version: string): Map<string, PropertyRe
     if (map.has(name)) continue;
 
     const description = getComment(store, iri);
-    const range = getRangeValue(store, iri);
+    const range = getRangeStructured(store, iri, localClassNames);
     const domain = buildDomainEntries(store, iri);
 
     map.set(name, { name, iri, description, range, domain, version });
@@ -94,20 +128,28 @@ function buildPropertyMap(store: Store, version: string): Map<string, PropertyRe
   return map;
 }
 
-function getRangeValue(store: Store, propertyIri: string): string {
+function getRangeStructured(
+  store: Store,
+  propertyIri: string,
+  localClassNames: Set<string>,
+): Range {
   const rangeQuads = store.getQuads(propertyIri, `${RDFS}range`, null, null);
-  if (rangeQuads.length === 0) return "";
+  if (rangeQuads.length === 0) {
+    // No range declared — treat as external with the property's own IRI as fallback
+    return { kind: "external", iri: propertyIri, label: localName(propertyIri) };
+  }
 
   const rangeNode = rangeQuads[0].object;
   // If it's a blank node (union range), collect all members
   if (rangeNode.termType === "BlankNode") {
     const unionQuads = store.getQuads(rangeNode, `${OWL}unionOf`, null, null);
     if (unionQuads.length > 0) {
-      const members = walkRdfList(store, unionQuads[0].object);
-      return members.map(localName).join(" | ");
+      const memberIris = walkRdfList(store, unionQuads[0].object);
+      const members = memberIris.map((iri) => classifyRange(iri, localClassNames));
+      return { kind: "union", members };
     }
   }
-  return localName(rangeNode.value);
+  return classifyRange(rangeNode.value, localClassNames);
 }
 
 function buildDomainEntries(store: Store, propertyIri: string): DomainEntry[] {
