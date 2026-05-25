@@ -86,16 +86,7 @@ pnpm build
 pnpm test
 ```
 
-### Scripts
-
-| Script             | Description                             |
-| ------------------ | --------------------------------------- |
-| `pnpm dev`         | Watch mode for development              |
-| `pnpm build`       | Compile TypeScript + add shebang        |
-| `pnpm test`        | Run test suite                          |
-| `pnpm inspect`     | Open MCP Inspector against built server |
-| `pnpm data:fetch`  | Fetch latest spec data from source      |
-| `pnpm data:ingest` | Ingest spec data into SQLite index      |
+See [CONTRIBUTING.md](./CONTRIBUTING.md) for the full development guide, release process, and CI details.
 
 ### Architecture
 

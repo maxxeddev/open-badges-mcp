@@ -32,4 +32,6 @@ jobs:
 
             - run: pnpm build
 
+            - run: pnpm data:ingest
+
             - run: pnpm test
