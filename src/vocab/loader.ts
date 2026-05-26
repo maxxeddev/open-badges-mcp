@@ -2,8 +2,16 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { Parser, type Quad_Object, Store } from "n3";
 import { resolveSnapshotPath } from "../config.js";
-import type { ClassRecord, DomainEntry, Manifest, PropertyRecord, Vocab } from "./types.js";
-import { KNOWN_PREFIXES, type Range } from "./types.js";
+import type {
+  ClassRecord,
+  DomainEntry,
+  Manifest,
+  PropertyRecord,
+  Range,
+  RangeMember,
+  Vocab,
+} from "./types.js";
+import { KNOWN_PREFIXES } from "./types.js";
 
 const RDF = "http://www.w3.org/1999/02/22-rdf-syntax-ns#";
 const RDFS = "http://www.w3.org/2000/01/rdf-schema#";
@@ -21,7 +29,7 @@ function toCurie(iri: string): { curie?: string; label: string } {
   return { label: tail || iri };
 }
 
-export function classifyRange(iri: string, localClassNames: Set<string>): Range {
+export function classifyRange(iri: string, localClassNames: Set<string>): RangeMember {
   // xsd primitive
   if (iri.startsWith("http://www.w3.org/2001/XMLSchema#")) {
     const { curie, label } = toCurie(iri);
@@ -30,7 +38,7 @@ export function classifyRange(iri: string, localClassNames: Set<string>): Range 
   // local OB vocab class
   const tail = iri.includes("#") ? iri.split("#").pop()! : iri.split("/").pop()!;
   if (localClassNames.has(tail)) {
-    return { kind: "vocab-class", iri, name: tail };
+    return { kind: "vocab-class", iri, className: tail };
   }
   // external (schema.org, vc, etc.)
   const { curie, label } = toCurie(iri);
@@ -136,20 +144,32 @@ function getRangeStructured(
   const rangeQuads = store.getQuads(propertyIri, `${RDFS}range`, null, null);
   if (rangeQuads.length === 0) {
     // No range declared — treat as external with the property's own IRI as fallback
-    return { kind: "external", iri: propertyIri, label: localName(propertyIri) };
+    const { curie, label } = toCurie(propertyIri);
+    return [{ kind: "external", iri: propertyIri, curie, label }];
   }
 
-  const rangeNode = rangeQuads[0].object;
-  // If it's a blank node (union range), collect all members
-  if (rangeNode.termType === "BlankNode") {
-    const unionQuads = store.getQuads(rangeNode, `${OWL}unionOf`, null, null);
-    if (unionQuads.length > 0) {
-      const memberIris = walkRdfList(store, unionQuads[0].object);
-      const members = memberIris.map((iri) => classifyRange(iri, localClassNames));
-      return { kind: "union", members };
+  // Collect all range targets (handles multiple rdfs:range triples, e.g. schema:rangeIncludes pattern)
+  const members: RangeMember[] = [];
+
+  for (const rq of rangeQuads) {
+    const rangeNode = rq.object;
+    if (rangeNode.termType === "BlankNode") {
+      // Blank node: check for owl:unionOf
+      const unionQuads = store.getQuads(rangeNode, `${OWL}unionOf`, null, null);
+      if (unionQuads.length > 0) {
+        const memberIris = walkRdfList(store, unionQuads[0].object);
+        for (const iri of memberIris) {
+          members.push(classifyRange(iri, localClassNames));
+        }
+      }
+    } else {
+      members.push(classifyRange(rangeNode.value, localClassNames));
     }
   }
-  return classifyRange(rangeNode.value, localClassNames);
+
+  return members.length > 0
+    ? members
+    : [{ kind: "external", iri: propertyIri, label: localName(propertyIri) }];
 }
 
 function buildDomainEntries(store: Store, propertyIri: string): DomainEntry[] {

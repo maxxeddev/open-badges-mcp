@@ -1,8 +1,9 @@
-export type Range =
+export type RangeMember =
   | { kind: "datatype"; iri: string; curie: string; label: string }
-  | { kind: "vocab-class"; iri: string; name: string }
-  | { kind: "external"; iri: string; curie?: string; label: string }
-  | { kind: "union"; members: Range[] };
+  | { kind: "vocab-class"; iri: string; className: string }
+  | { kind: "external"; iri: string; curie?: string; label: string };
+
+export type Range = RangeMember[];
 
 export const KNOWN_PREFIXES: Record<string, string> = {
   "http://www.w3.org/2001/XMLSchema#": "xsd",

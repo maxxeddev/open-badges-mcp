@@ -40,15 +40,16 @@ describe("Property 3: get_class returns complete structured record for valid nam
 
   it.each(
     classNames,
-  )("class '%s' each property has name (string), range (object), description (string)", async (className) => {
+  )("class '%s' each property has name (string), range (array), description (string)", async (className) => {
     const result = await handler({ name: className });
     const parsed = JSON.parse(result.content[0].text);
 
     for (const prop of parsed.properties) {
       expect(typeof prop.name).toBe("string");
       expect(prop.name.length).toBeGreaterThan(0);
-      expect(typeof prop.range).toBe("object");
-      expect(prop.range).toHaveProperty("kind");
+      expect(Array.isArray(prop.range)).toBe(true);
+      expect(prop.range.length).toBeGreaterThan(0);
+      expect(prop.range[0]).toHaveProperty("kind");
       expect(typeof prop.description).toBe("string");
     }
   });
