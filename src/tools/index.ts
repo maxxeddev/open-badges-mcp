@@ -1,6 +1,8 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import * as createAchievementCredential from "./create_achievement_credential.js";
 import * as crossReference from "./cross_reference.js";
 import * as findConformanceRequirements from "./find_conformance_requirements.js";
+import * as generateCredential from "./generate_credential.js";
 import * as getClass from "./get_class.js";
 import * as getContext from "./get_context.js";
 import * as getExamples from "./get_examples.js";
@@ -29,6 +31,8 @@ const tools = [
   getExamples,
   validateCredential,
   findConformanceRequirements,
+  generateCredential,
+  createAchievementCredential,
 ];
 
 export function registerAll(server: McpServer): void {

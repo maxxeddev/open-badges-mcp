@@ -1,6 +1,5 @@
 {
-  "version": "3.0.3",
-  "fetchDate": "2026-06-04T00:57:03.470Z",
+  "schemaVersion": 1,
   "sources": [
     {
       "id": "ob3-vocab",
@@ -8,7 +7,6 @@
       "spec": "ob3",
       "version": "3.0.3",
       "url": "https://purl.imsglobal.org/spec/vc/ob/vocab.ttl",
-      "filename": "vocab.ttl",
       "dest": "vocab.ttl"
     },
     {
@@ -17,7 +15,6 @@
       "spec": "ob3",
       "version": "3.0.3",
       "url": "https://purl.imsglobal.org/spec/ob/v3p0/context-3.0.3.json",
-      "filename": "context.json",
       "dest": "context.json"
     },
     {
@@ -25,8 +22,8 @@
       "kind": "html-spec",
       "spec": "ob3",
       "version": "3.0.3",
+      "parser": "ims-respec",
       "url": "https://www.imsglobal.org/spec/ob/v3p0/",
-      "filename": "ob3-spec.html",
       "dest": "ob3-spec.html"
     },
     {
@@ -34,8 +31,8 @@
       "kind": "html-spec",
       "spec": "vc",
       "version": "v2.0",
+      "parser": "w3c-respec",
       "url": "https://www.w3.org/TR/vc-data-model-2.0/",
-      "filename": "vc-spec.html",
       "dest": "vc-spec.html"
     },
     {
@@ -43,8 +40,8 @@
       "kind": "html-spec",
       "spec": "did-core",
       "version": "v1.0",
+      "parser": "w3c-respec",
       "url": "https://www.w3.org/TR/did-core/",
-      "filename": "did-core-spec.html",
       "dest": "did-core-spec.html"
     },
     {
@@ -53,7 +50,6 @@
       "spec": "ob3",
       "version": "3.0.3",
       "url": "https://purl.imsglobal.org/spec/ob/v3p0/schema/json/ob_v3p0_achievementcredential_schema.json",
-      "filename": "achievement-credential.schema.json",
       "dest": "achievement-credential.schema.json"
     },
     {
@@ -62,7 +58,6 @@
       "spec": "ob3",
       "version": "3.0.3",
       "url": "https://purl.imsglobal.org/spec/ob/v3p0/schema/json/ob_v3p0_endorsementcredential_schema.json",
-      "filename": "endorsement-credential.schema.json",
       "dest": "endorsement-credential.schema.json"
     }
   ]

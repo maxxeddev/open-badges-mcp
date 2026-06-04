@@ -1,9 +1,10 @@
+import * as cheerio from "cheerio";
+import { Parser, Store } from "n3";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { dirname, join } from "node:path";
-import * as cheerio from "cheerio";
-import { Parser, Store } from "n3";
 import initSqlJs from "sql.js";
+import { CredentialGraphGenerator } from "./generator/index.js";
 
 const VERSION = "3.0.3";
 
@@ -43,11 +44,61 @@ export function resolveDataDir(override?: string): string {
   return join(homedir(), ".mcp-ob-ts", "data");
 }
 
-function parseArgs(argv: string[]): { init: boolean; dataDir?: string } {
+export type GenerateCLIArgs = {
+  subcommand: "generate-credential";
+  maxDepth?: number;
+  mode?: "minimal" | "full";
+  seed?: number;
+  includeMermaid: boolean;
+  outputFile?: string;
+  rootClass?: string;
+};
+
+export type ParsedArgs =
+  | { subcommand: undefined; init: boolean; dataDir?: string }
+  | ({ subcommand: "generate-credential" } & GenerateCLIArgs & { init: boolean; dataDir?: string });
+
+function parseArgs(argv: string[]): ParsedArgs {
   const init = argv.includes("--init");
   const dataDirIdx = argv.indexOf("--data-dir");
   const dataDir = dataDirIdx !== -1 ? argv[dataDirIdx + 1] : undefined;
-  return { init, dataDir };
+
+  if (argv[0] === "generate-credential") {
+    const maxDepthIdx = argv.indexOf("--max-depth");
+    const maxDepthRaw = maxDepthIdx !== -1 ? argv[maxDepthIdx + 1] : undefined;
+    const maxDepth = maxDepthRaw !== undefined ? Number.parseInt(maxDepthRaw, 10) : undefined;
+
+    const modeIdx = argv.indexOf("--mode");
+    const modeRaw = modeIdx !== -1 ? argv[modeIdx + 1] : undefined;
+    const mode: "minimal" | "full" | undefined =
+      modeRaw === "minimal" || modeRaw === "full" ? modeRaw : undefined;
+
+    const seedIdx = argv.indexOf("--seed");
+    const seedRaw = seedIdx !== -1 ? argv[seedIdx + 1] : undefined;
+    const seed = seedRaw !== undefined ? Number.parseInt(seedRaw, 10) : undefined;
+
+    const includeMermaid = argv.includes("--include-mermaid");
+
+    const outputFileIdx = argv.indexOf("--output-file");
+    const outputFile = outputFileIdx !== -1 ? argv[outputFileIdx + 1] : undefined;
+
+    const rootClassIdx = argv.indexOf("--root-class");
+    const rootClass = rootClassIdx !== -1 ? argv[rootClassIdx + 1] : undefined;
+
+    return {
+      subcommand: "generate-credential",
+      maxDepth,
+      mode,
+      seed,
+      includeMermaid,
+      outputFile,
+      rootClass,
+      init,
+      dataDir,
+    };
+  }
+
+  return { subcommand: undefined, init, dataDir };
 }
 
 // ─── Download ───────────────────────────────────────────────────────────────
@@ -512,6 +563,58 @@ async function ingestData(dataDir: string): Promise<void> {
 async function main() {
   const args = parseArgs(process.argv.slice(2));
   const dataDir = resolveDataDir(args.dataDir);
+
+  // ─── generate-credential subcommand (Req 11.8, 11.9) ─────────────────────
+  if (args.subcommand === "generate-credential") {
+    // Validate --max-depth: must be a valid integer when supplied
+    if (args.maxDepth !== undefined && Number.isNaN(args.maxDepth)) {
+      process.stderr.write(
+        "Error: --max-depth must be a valid integer in the range 0–10\n",
+      );
+      process.exit(1);
+    }
+
+    const generator = new CredentialGraphGenerator();
+    let result: Awaited<ReturnType<typeof generator.generate>>;
+    try {
+      result = await generator.generate({
+        maxDepth: args.maxDepth,
+        mode: args.mode,
+        seed: args.seed,
+        includeMermaid: args.includeMermaid,
+        rootClass: args.rootClass,
+      });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      process.stderr.write(`Error: ${message}\n`);
+      process.exit(1);
+    }
+
+    // Check for GeneratorError (ok: false)
+    if ("ok" in result && result.ok === false) {
+      process.stderr.write(`Error: ${result.error}\n`);
+      process.exit(1);
+    }
+
+    // Success — write JSON output
+    const json = JSON.stringify(result, null, 2);
+
+    if (args.outputFile) {
+      try {
+        mkdirSync(dirname(args.outputFile), { recursive: true });
+        writeFileSync(args.outputFile, json, "utf-8");
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        process.stderr.write(`Error: failed to write output file: ${message}\n`);
+        process.exit(1);
+      }
+    } else {
+      process.stdout.write(`${json}\n`);
+    }
+
+    process.exit(0);
+  }
+  // ──────────────────────────────────────────────────────────────────────────
 
   const needsInit = args.init || !existsSync(join(dataDir, "index.db"));
 
