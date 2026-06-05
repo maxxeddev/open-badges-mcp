@@ -3,9 +3,9 @@ import { dirname, join } from "node:path";
 import * as cheerio from "cheerio";
 import { Parser, Store } from "n3";
 import initSqlJs from "sql.js";
+import { sourcesByKind } from "../src/sources.js";
 
-const VERSION = "3.0.3";
-const SNAPSHOT_DIR = join("data", "snapshots", VERSION);
+const SNAPSHOT_DIR = join("data", "snapshots", "3.0.3");
 const DB_PATH = join("data", "index.db");
 
 interface Section {
@@ -391,10 +391,11 @@ async function main() {
   `);
 
   // Process spec files
-  const specFiles: Array<{ filename: string; spec: string }> = [
-    { filename: "ob3-spec.html", spec: "ob3" },
-    { filename: "vc-spec.html", spec: "vc" },
-  ];
+  const specFiles = sourcesByKind("html-spec").map((s) => ({
+    filename: s.dest,
+    spec: s.spec,
+    version: s.version,
+  }));
 
   // Load vocab terms for topic_tags extraction
   console.log("Loading vocab terms for conformance tagging...");
@@ -406,10 +407,10 @@ async function main() {
   let totalExamples = 0;
   let totalConformance = 0;
 
-  for (const { filename, spec } of specFiles) {
+  for (const { filename, spec, version } of specFiles) {
     console.log(`Parsing ${filename}...`);
     const html = readFileSync(join(SNAPSHOT_DIR, filename), "utf-8");
-    const sections = parseSections(html, spec, VERSION);
+    const sections = parseSections(html, spec, version);
     console.log(`  Found ${sections.length} sections in ${filename}`);
     totalSections += sections.length;
 
@@ -433,9 +434,11 @@ async function main() {
         );
         totalRows++;
       } else {
-        // Multiple chunks — suffix section_id with __chunk_N
+        // Multiple chunks — first chunk keeps the original section_id so
+        // child sections can still reference it as parent_id.
+        // Additional chunks get a __chunk_N suffix.
         for (let i = 0; i < chunks.length; i++) {
-          const chunkId = `${section.sectionId}__chunk_${i + 1}`;
+          const chunkId = i === 0 ? section.sectionId : `${section.sectionId}__chunk_${i + 1}`;
           db.run(
             `INSERT OR REPLACE INTO sections (spec, section_id, parent_id, title, anchor, body, version)
              VALUES (?, ?, ?, ?, ?, ?, ?)`,
@@ -455,7 +458,7 @@ async function main() {
     }
 
     // Extract JSON-LD examples
-    const examples = extractExamples(html, spec, VERSION);
+    const examples = extractExamples(html, spec, version);
     console.log(`  Found ${examples.length} JSON-LD examples in ${filename}`);
     totalExamples += examples.length;
 
