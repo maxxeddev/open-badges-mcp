@@ -36,3 +36,5 @@ jobs:
             - run: pnpm data:ingest
 
             - run: pnpm test
+
+            - run: pnpm test:smoke
