@@ -19,11 +19,7 @@ export const inputSchema = {
     .describe(
       "Generation mode: minimal (required fields only) or full (all fields). Default: minimal",
     ),
-  seed: z
-    .number()
-    .int()
-    .optional()
-    .describe("Optional PRNG seed for deterministic output"),
+  seed: z.number().int().optional().describe("Optional PRNG seed for deterministic output"),
   includeMermaid: z
     .boolean()
     .optional()

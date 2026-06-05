@@ -4,10 +4,7 @@
  */
 import { describe, expect, it } from "vitest";
 import { CredentialGraphGenerator } from "../../src/generator/index.js";
-import type {
-    GenerationOutput,
-    GeneratorError,
-} from "../../src/generator/types.js";
+import type { GenerationOutput, GeneratorError } from "../../src/generator/types.js";
 import { validateJsonLd } from "../../src/validate/jsonld.js";
 import { validateSchema } from "../../src/validate/schema.js";
 
@@ -26,10 +23,7 @@ function isGeneratorError(result: unknown): result is GeneratorError {
 
 function isGenerationOutput(result: unknown): result is GenerationOutput {
   return (
-    result !== null &&
-    typeof result === "object" &&
-    "credentials" in result &&
-    "coverage" in result
+    result !== null && typeof result === "object" && "credentials" in result && "coverage" in result
   );
 }
 
@@ -107,7 +101,9 @@ describe("CredentialGraphGenerator – config validation errors", () => {
     expect(err.fields!.length).toBeGreaterThanOrEqual(2);
     const fields = err.fields!.map((f) => f.field);
     expect(fields).toContain("mode");
-    const hasMaxDepth = fields.some((f) => f.toLowerCase().includes("maxdepth") || f === "maxDepth");
+    const hasMaxDepth = fields.some(
+      (f) => f.toLowerCase().includes("maxdepth") || f === "maxDepth",
+    );
     expect(hasMaxDepth).toBe(true);
   });
 });
@@ -143,7 +139,7 @@ describe("CredentialGraphGenerator – end-to-end minimal mode", () => {
     const out = result as GenerationOutput;
 
     const doc = out.credentials[0].document;
-    const types = doc["type"] as string[];
+    const types = doc.type as string[];
     expect(Array.isArray(types)).toBe(true);
     expect(types).toContain("AchievementCredential");
   }, 30000);
@@ -153,8 +149,8 @@ describe("CredentialGraphGenerator – end-to-end minimal mode", () => {
     const out = result as GenerationOutput;
 
     const doc = out.credentials[0].document;
-    expect(typeof doc["id"]).toBe("string");
-    expect((doc["id"] as string).length).toBeGreaterThan(0);
+    expect(typeof doc.id).toBe("string");
+    expect((doc.id as string).length).toBeGreaterThan(0);
   }, 30000);
 
   it("coverage report is present with exercisedClasses, exercisedProperties, exercisedEdges", async () => {

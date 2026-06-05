@@ -1,7 +1,7 @@
-import * as cheerio from "cheerio";
-import { Parser, Store } from "n3";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
+import * as cheerio from "cheerio";
+import { Parser, Store } from "n3";
 import initSqlJs from "sql.js";
 import { sourcesByKind } from "../src/sources.js";
 

@@ -56,7 +56,7 @@ describe("MermaidRenderer", () => {
       const result = renderer.render(path);
 
       // Count occurrences of the arrow line — should appear exactly once
-      const arrowMatches = result.match(/A -->|child| B/g);
+      const _arrowMatches = result.match(/A -->|child| B/g);
       // Split by lines and count exact arrow lines
       const lines = result.split("\n");
       const arrowLines = lines.filter((l) => l.trim() === "A -->|child| B");
@@ -70,9 +70,7 @@ describe("MermaidRenderer", () => {
       };
       const result = renderer.render(path);
 
-      const nodeLines = result
-        .split("\n")
-        .filter((l) => l.trim() === "Profile[Profile]");
+      const nodeLines = result.split("\n").filter((l) => l.trim() === "Profile[Profile]");
       expect(nodeLines).toHaveLength(1);
     });
 
@@ -107,9 +105,7 @@ describe("MermaidRenderer", () => {
       expect(result).toContain("SomeClass[Some-Class]");
       // The raw hyphenated name should not appear as a node ID
       const lines = result.split("\n");
-      const nodeLineWithHyphenId = lines.filter((l) =>
-        /^\s+Some-Class\[/.test(l),
-      );
+      const nodeLineWithHyphenId = lines.filter((l) => /^\s+Some-Class\[/.test(l));
       expect(nodeLineWithHyphenId).toHaveLength(0);
     });
 

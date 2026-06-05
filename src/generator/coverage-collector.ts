@@ -54,18 +54,9 @@ export class CoverageCollector {
     const totalProperties = allPropertyNames.size;
 
     return {
-      exercisedClasses: buildCategoryReport(
-        this.exercisedClasses.size,
-        totalClasses,
-      ),
-      exercisedProperties: buildCategoryReport(
-        this.exercisedProperties.size,
-        totalProperties,
-      ),
-      exercisedEdges: buildCategoryReport(
-        this.exercisedEdges.size,
-        totalEdges,
-      ),
+      exercisedClasses: buildCategoryReport(this.exercisedClasses.size, totalClasses),
+      exercisedProperties: buildCategoryReport(this.exercisedProperties.size, totalProperties),
+      exercisedEdges: buildCategoryReport(this.exercisedEdges.size, totalEdges),
     };
   }
 }
@@ -81,9 +72,6 @@ function buildCategoryReport(
   if (total === 0) {
     return { count: 0, total: 0, percentage: 0 };
   }
-  const percentage = Math.min(
-    100,
-    Math.round((count / total) * 100 * 100) / 100,
-  );
+  const percentage = Math.min(100, Math.round((count / total) * 100 * 100) / 100);
   return { count, total, percentage };
 }

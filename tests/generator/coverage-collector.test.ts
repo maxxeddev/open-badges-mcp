@@ -16,10 +16,7 @@ import type { ActivePath, TypeGraph } from "../../src/generator/types.js";
  * Classes: 3, distinct property names: 2, total edges: 2
  */
 function buildSmallGraph(): TypeGraph {
-  const makeNode = (
-    name: string,
-    edges: Array<{ prop: string; target: string }>,
-  ) => ({
+  const makeNode = (name: string, edges: Array<{ prop: string; target: string }>) => ({
     name,
     properties: new Map(
       edges.map(({ prop, target }) => [
@@ -45,9 +42,7 @@ function buildSmallGraph(): TypeGraph {
     ],
     [
       "AchievementSubject",
-      makeNode("AchievementSubject", [
-        { prop: "achievement", target: "Achievement" },
-      ]),
+      makeNode("AchievementSubject", [{ prop: "achievement", target: "Achievement" }]),
     ],
     ["Achievement", makeNode("Achievement", [])],
   ]);
@@ -70,10 +65,7 @@ function buildEmptyGraph(): TypeGraph {
  * Classes: 3, distinct property names: 1, total edges: 2
  */
 function buildSharedPropertyGraph(): TypeGraph {
-  const makeNode = (
-    name: string,
-    edges: Array<{ prop: string; target: string }>,
-  ) => ({
+  const makeNode = (name: string, edges: Array<{ prop: string; target: string }>) => ({
     name,
     properties: new Map(
       edges.map(({ prop, target }) => [
@@ -101,10 +93,7 @@ function buildSharedPropertyGraph(): TypeGraph {
 
 /** A graph with 4 classes and 4 distinct edges for easy percentage checks. */
 function buildFourNodeGraph(): TypeGraph {
-  const makeNode = (
-    name: string,
-    edges: Array<{ prop: string; target: string }>,
-  ) => ({
+  const makeNode = (name: string, edges: Array<{ prop: string; target: string }>) => ({
     name,
     properties: new Map(
       edges.map(({ prop, target }) => [
@@ -179,7 +168,11 @@ describe("CoverageCollector", () => {
       const path: ActivePath = {
         nodes: ["AchievementCredential", "AchievementSubject", "Achievement"],
         edges: [
-          { from: "AchievementCredential", to: "AchievementSubject", propertyName: "credentialSubject" },
+          {
+            from: "AchievementCredential",
+            to: "AchievementSubject",
+            propertyName: "credentialSubject",
+          },
           { from: "AchievementSubject", to: "Achievement", propertyName: "achievement" },
         ],
       };
@@ -240,7 +233,11 @@ describe("CoverageCollector", () => {
       const path1: ActivePath = {
         nodes: ["AchievementCredential", "AchievementSubject"],
         edges: [
-          { from: "AchievementCredential", to: "AchievementSubject", propertyName: "credentialSubject" },
+          {
+            from: "AchievementCredential",
+            to: "AchievementSubject",
+            propertyName: "credentialSubject",
+          },
         ],
       };
 
@@ -248,7 +245,11 @@ describe("CoverageCollector", () => {
       const path2: ActivePath = {
         nodes: ["AchievementCredential", "AchievementSubject", "Achievement"],
         edges: [
-          { from: "AchievementCredential", to: "AchievementSubject", propertyName: "credentialSubject" },
+          {
+            from: "AchievementCredential",
+            to: "AchievementSubject",
+            propertyName: "credentialSubject",
+          },
           { from: "AchievementSubject", to: "Achievement", propertyName: "achievement" },
         ],
       };

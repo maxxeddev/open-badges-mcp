@@ -18,10 +18,7 @@ type NodeDescriptor = {
   edges?: EdgeDescriptor[];
 };
 
-function makeGraph(
-  nodes: NodeDescriptor[],
-  rootClass?: string,
-): TypeGraph {
+function makeGraph(nodes: NodeDescriptor[], rootClass?: string): TypeGraph {
   const map = new Map<string, GraphNode>();
 
   for (const nd of nodes) {
@@ -227,10 +224,7 @@ describe("TraversalEngine", () => {
   describe("default root", () => {
     it("uses graph.rootClass when no root argument is provided", () => {
       const graph = makeGraph(
-        [
-          { name: "Root", edges: [{ prop: "child", target: "Child" }] },
-          { name: "Child" },
-        ],
+        [{ name: "Root", edges: [{ prop: "child", target: "Child" }] }, { name: "Child" }],
         "Root",
       );
 

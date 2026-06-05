@@ -1,14 +1,6 @@
 import { describe, expect, it } from "vitest";
-import {
-    CredentialSynthesizer,
-    createRand,
-} from "../../src/generator/credential-synthesizer.js";
-import type {
-    ActivePath,
-    GraphEdge,
-    GraphNode,
-    TypeGraph,
-} from "../../src/generator/types.js";
+import { CredentialSynthesizer, createRand } from "../../src/generator/credential-synthesizer.js";
+import type { ActivePath, GraphEdge, GraphNode, TypeGraph } from "../../src/generator/types.js";
 
 // ---------------------------------------------------------------------------
 // Helper: build a TypeGraph from lightweight descriptors
@@ -100,11 +92,7 @@ describe("minimal mode — required fields only", () => {
     ]);
 
     const rand = createRand(1);
-    const synth = new CredentialSynthesizer(
-      graph,
-      { maxDepth: 3, mode: "minimal" },
-      rand,
-    );
+    const synth = new CredentialSynthesizer(graph, { maxDepth: 3, mode: "minimal" }, rand);
     const result = synth.synthesize(makeActivePath("Root"));
 
     expect("ok" in result && result.ok === false).toBe(false);
@@ -130,18 +118,14 @@ describe("minimal mode — required fields only", () => {
     ]);
 
     const rand = createRand(2);
-    const synth = new CredentialSynthesizer(
-      graph,
-      { maxDepth: 3, mode: "minimal" },
-      rand,
-    );
+    const synth = new CredentialSynthesizer(graph, { maxDepth: 3, mode: "minimal" }, rand);
     const result = synth.synthesize(makeActivePath("AchievementCredential"));
 
     expect("ok" in result && result.ok === false).toBe(false);
     const doc = result as Record<string, unknown>;
 
     expect(Array.isArray(doc["@context"])).toBe(true);
-    expect(Array.isArray(doc["type"])).toBe(true);
+    expect(Array.isArray(doc.type)).toBe(true);
   });
 });
 
@@ -165,11 +149,7 @@ describe("full mode — all fields included", () => {
     ]);
 
     const rand = createRand(3);
-    const synth = new CredentialSynthesizer(
-      graph,
-      { maxDepth: 3, mode: "full" },
-      rand,
-    );
+    const synth = new CredentialSynthesizer(graph, { maxDepth: 3, mode: "full" }, rand);
     const result = synth.synthesize(makeActivePath("Root"));
 
     expect("ok" in result && result.ok === false).toBe(false);
@@ -203,11 +183,7 @@ describe("enum synthesis", () => {
     // Run 20 times to exercise different PRNG states
     for (let seed = 0; seed < 20; seed++) {
       const rand = createRand(seed);
-      const synth = new CredentialSynthesizer(
-        graph,
-        { maxDepth: 3, mode: "minimal" },
-        rand,
-      );
+      const synth = new CredentialSynthesizer(graph, { maxDepth: 3, mode: "minimal" }, rand);
       const result = synth.synthesize(makeActivePath("Root"));
       expect("ok" in result && result.ok === false).toBe(false);
       const doc = result as Record<string, unknown>;
@@ -231,11 +207,7 @@ describe("enum synthesis", () => {
 
     for (let seed = 0; seed < 50; seed++) {
       const rand = createRand(seed);
-      const synth = new CredentialSynthesizer(
-        graph,
-        { maxDepth: 3, mode: "minimal" },
-        rand,
-      );
+      const synth = new CredentialSynthesizer(graph, { maxDepth: 3, mode: "minimal" }, rand);
       const result = synth.synthesize(makeActivePath("Root"));
       expect("ok" in result && result.ok === false).toBe(false);
       const doc = result as Record<string, unknown>;
@@ -274,10 +246,7 @@ describe("URI-or-object form based on depth", () => {
       name: "ProfileRef",
       properties: new Map(),
       rawSchema: {
-        anyOf: [
-          { $ref: "#/$defs/Profile" },
-          { type: "string", format: "uri" },
-        ],
+        anyOf: [{ $ref: "#/$defs/Profile" }, { type: "string", format: "uri" }],
       },
     });
 
@@ -307,11 +276,7 @@ describe("URI-or-object form based on depth", () => {
     const graph = makeProfileRefGraph();
 
     const rand = createRand(10);
-    const synth = new CredentialSynthesizer(
-      graph,
-      { maxDepth: 0, mode: "minimal" },
-      rand,
-    );
+    const synth = new CredentialSynthesizer(graph, { maxDepth: 0, mode: "minimal" }, rand);
     const result = synth.synthesize(makeActivePath("Root"));
 
     expect("ok" in result && result.ok === false).toBe(false);
@@ -326,11 +291,7 @@ describe("URI-or-object form based on depth", () => {
 
     // full mode so optional properties are included; maxDepth=0
     const rand = createRand(11);
-    const synth = new CredentialSynthesizer(
-      graph,
-      { maxDepth: 0, mode: "full" },
-      rand,
-    );
+    const synth = new CredentialSynthesizer(graph, { maxDepth: 0, mode: "full" }, rand);
     const result = synth.synthesize(makeActivePath("Root"));
 
     expect("ok" in result && result.ok === false).toBe(false);
@@ -349,11 +310,7 @@ describe("URI-or-object form based on depth", () => {
 
     // full mode, maxDepth=2 so Root (depth 0) is below maxDepth
     const rand = createRand(12);
-    const synth = new CredentialSynthesizer(
-      graph,
-      { maxDepth: 2, mode: "full" },
-      rand,
-    );
+    const synth = new CredentialSynthesizer(graph, { maxDepth: 2, mode: "full" }, rand);
     const result = synth.synthesize(makeActivePath("Root"));
 
     expect("ok" in result && result.ok === false).toBe(false);
@@ -418,11 +375,7 @@ describe("array property cardinality", () => {
     const lengths = new Set<number>();
     for (let seed = 0; seed < 30; seed++) {
       const rand = createRand(seed);
-      const synth = new CredentialSynthesizer(
-        graph,
-        { maxDepth: 3, mode: "full" },
-        rand,
-      );
+      const synth = new CredentialSynthesizer(graph, { maxDepth: 3, mode: "full" }, rand);
       const result = synth.synthesize(makeActivePath("Root"));
       expect("ok" in result && result.ok === false).toBe(false);
       const doc = result as Record<string, unknown>;
@@ -446,10 +399,7 @@ describe("array property cardinality", () => {
         rawSchema: {
           properties: {
             tags: {
-              oneOf: [
-                { type: "string" },
-                { type: "array", items: { type: "string" } },
-              ],
+              oneOf: [{ type: "string" }, { type: "array", items: { type: "string" } }],
             },
           },
           required: ["tags"],
@@ -460,11 +410,7 @@ describe("array property cardinality", () => {
     const lengths = new Set<number>();
     for (let seed = 0; seed < 30; seed++) {
       const rand = createRand(seed);
-      const synth = new CredentialSynthesizer(
-        graph,
-        { maxDepth: 3, mode: "minimal" },
-        rand,
-      );
+      const synth = new CredentialSynthesizer(graph, { maxDepth: 3, mode: "minimal" }, rand);
       const result = synth.synthesize(makeActivePath("Root"));
       if (!("ok" in result && result.ok === false)) {
         const doc = result as Record<string, unknown>;
@@ -504,19 +450,11 @@ describe("seeded PRNG determinism", () => {
     const seed = 42;
 
     const rand1 = createRand(seed);
-    const synth1 = new CredentialSynthesizer(
-      graph,
-      { maxDepth: 3, mode: "full" },
-      rand1,
-    );
+    const synth1 = new CredentialSynthesizer(graph, { maxDepth: 3, mode: "full" }, rand1);
     const result1 = synth1.synthesize(makeActivePath("Root"));
 
     const rand2 = createRand(seed);
-    const synth2 = new CredentialSynthesizer(
-      graph,
-      { maxDepth: 3, mode: "full" },
-      rand2,
-    );
+    const synth2 = new CredentialSynthesizer(graph, { maxDepth: 3, mode: "full" }, rand2);
     const result2 = synth2.synthesize(makeActivePath("Root"));
 
     expect(JSON.stringify(result1)).toBe(JSON.stringify(result2));
@@ -536,11 +474,7 @@ describe("seeded PRNG determinism", () => {
     const results = new Set<string>();
     for (const seed of [1, 2, 3, 4, 5]) {
       const rand = createRand(seed);
-      const synth = new CredentialSynthesizer(
-        graph,
-        { maxDepth: 3, mode: "minimal" },
-        rand,
-      );
+      const synth = new CredentialSynthesizer(graph, { maxDepth: 3, mode: "minimal" }, rand);
       const result = synth.synthesize(makeActivePath("Root"));
       results.add(JSON.stringify(result));
     }
@@ -574,11 +508,7 @@ describe("scalar type synthesis", () => {
     ]);
 
     const rand = createRand(7);
-    const synth = new CredentialSynthesizer(
-      graph,
-      { maxDepth: 3, mode: "minimal" },
-      rand,
-    );
+    const synth = new CredentialSynthesizer(graph, { maxDepth: 3, mode: "minimal" }, rand);
     const result = synth.synthesize(makeActivePath("Root"));
 
     expect("ok" in result && result.ok === false).toBe(false);
@@ -611,11 +541,7 @@ describe("scalar type synthesis", () => {
     ]);
 
     const rand = createRand(8);
-    const synth = new CredentialSynthesizer(
-      graph,
-      { maxDepth: 3, mode: "minimal" },
-      rand,
-    );
+    const synth = new CredentialSynthesizer(graph, { maxDepth: 3, mode: "minimal" }, rand);
     const result = synth.synthesize(makeActivePath("Root"));
 
     expect("ok" in result && result.ok === false).toBe(false);
@@ -641,11 +567,7 @@ describe("root-level @context and type injection", () => {
     ]);
 
     const rand = createRand(9);
-    const synth = new CredentialSynthesizer(
-      graph,
-      { maxDepth: 3, mode: "minimal" },
-      rand,
-    );
+    const synth = new CredentialSynthesizer(graph, { maxDepth: 3, mode: "minimal" }, rand);
     const result = synth.synthesize(makeActivePath("AchievementCredential"));
 
     expect("ok" in result && result.ok === false).toBe(false);
@@ -654,9 +576,7 @@ describe("root-level @context and type injection", () => {
     expect(Array.isArray(doc["@context"])).toBe(true);
     expect((doc["@context"] as string[]).length).toBeGreaterThan(0);
     // Must include OB3 context
-    expect(doc["@context"]).toContain(
-      "https://purl.imsglobal.org/spec/ob/v3p0/context-3.0.3.json",
-    );
+    expect(doc["@context"]).toContain("https://purl.imsglobal.org/spec/ob/v3p0/context-3.0.3.json");
   });
 
   it("injects type as an array at root", () => {
@@ -671,11 +591,7 @@ describe("root-level @context and type injection", () => {
     ]);
 
     const rand = createRand(10);
-    const synth = new CredentialSynthesizer(
-      graph,
-      { maxDepth: 3, mode: "minimal" },
-      rand,
-    );
+    const synth = new CredentialSynthesizer(graph, { maxDepth: 3, mode: "minimal" }, rand);
     const result = synth.synthesize(makeActivePath("AchievementCredential"));
 
     expect("ok" in result && result.ok === false).toBe(false);
@@ -697,11 +613,7 @@ describe("root-level @context and type injection", () => {
     ]);
 
     const rand = createRand(11);
-    const synth = new CredentialSynthesizer(
-      graph,
-      { maxDepth: 3, mode: "minimal" },
-      rand,
-    );
+    const synth = new CredentialSynthesizer(graph, { maxDepth: 3, mode: "minimal" }, rand);
     const result = synth.synthesize(makeActivePath("Root"));
 
     expect("ok" in result && result.ok === false).toBe(false);
@@ -736,11 +648,7 @@ describe("GeneratorError for unsupported required schema", () => {
     ]);
 
     const rand = createRand(99);
-    const synth = new CredentialSynthesizer(
-      graph,
-      { maxDepth: 3, mode: "minimal" },
-      rand,
-    );
+    const synth = new CredentialSynthesizer(graph, { maxDepth: 3, mode: "minimal" }, rand);
     const result = synth.synthesize(makeActivePath("Root"));
 
     // {type: "object"} is unrecognized by extractScalarSchema → silently skipped
@@ -787,11 +695,7 @@ describe("GeneratorError for unsupported required schema", () => {
     const graph = { nodes, rootClass: "Root" };
 
     const rand = createRand(101);
-    const synth = new CredentialSynthesizer(
-      graph,
-      { maxDepth: 3, mode: "minimal" },
-      rand,
-    );
+    const synth = new CredentialSynthesizer(graph, { maxDepth: 3, mode: "minimal" }, rand);
     const result = synth.synthesize(makeActivePath("Root"));
 
     // {format: "email"} has no recognized type → extractScalarSchema returns null
@@ -813,11 +717,7 @@ describe("GeneratorError for unsupported required schema", () => {
     ]);
 
     const rand = createRand(100);
-    const synth = new CredentialSynthesizer(
-      graph,
-      { maxDepth: 3, mode: "minimal" },
-      rand,
-    );
+    const synth = new CredentialSynthesizer(graph, { maxDepth: 3, mode: "minimal" }, rand);
     const result = synth.synthesize(makeActivePath("Root"));
 
     // Optional unsupported type: skip gracefully, no error

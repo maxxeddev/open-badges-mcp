@@ -1,8 +1,8 @@
-import * as cheerio from "cheerio";
-import { Parser, Store } from "n3";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { dirname, join } from "node:path";
+import * as cheerio from "cheerio";
+import { Parser, Store } from "n3";
 import initSqlJs from "sql.js";
 import { CredentialGraphGenerator } from "./generator/index.js";
 
@@ -568,9 +568,7 @@ async function main() {
   if (args.subcommand === "generate-credential") {
     // Validate --max-depth: must be a valid integer when supplied
     if (args.maxDepth !== undefined && Number.isNaN(args.maxDepth)) {
-      process.stderr.write(
-        "Error: --max-depth must be a valid integer in the range 0–10\n",
-      );
+      process.stderr.write("Error: --max-depth must be a valid integer in the range 0–10\n");
       process.exit(1);
     }
 

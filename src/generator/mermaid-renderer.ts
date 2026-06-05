@@ -32,9 +32,7 @@ export class MermaidRenderer {
     }
 
     // Step 3: build node declaration lines
-    const nodeLines = distinctClasses.map(
-      (className) => `  ${sanitize(className)}[${className}]`,
-    );
+    const nodeLines = distinctClasses.map((className) => `  ${sanitize(className)}[${className}]`);
 
     // Step 4 & 5: collect distinct (from, to, propertyName) triples
     const edgeLines: string[] = [];

@@ -38,9 +38,7 @@ function extractRefName(ref: string): string | null {
  *
  * Returns { refName, isArray } or null if no $ref found.
  */
-function extractRefFromProperty(
-  propValue: unknown,
-): { refName: string; isArray: boolean } | null {
+function extractRefFromProperty(propValue: unknown): { refName: string; isArray: boolean } | null {
   if (!propValue || typeof propValue !== "object") return null;
 
   const prop = propValue as Record<string, unknown>;

@@ -54,11 +54,7 @@ export class TraversalEngine {
    * @param depth     - current traversal depth (root is 0)
    * @param activePath - accumulator for the result
    */
-  private _traverse(
-    nodeName: string,
-    depth: number,
-    activePath: ActivePath,
-  ): void {
+  private _traverse(nodeName: string, depth: number, activePath: ActivePath): void {
     const node = this.graph.nodes.get(nodeName);
     if (!node) {
       // Unknown node referenced by an edge — record its name and stop.

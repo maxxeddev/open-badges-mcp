@@ -11,12 +11,7 @@
  * Requirements: 3.2, 3.3, 3.4, 3.6, 5.1, 5.2, 5.3, 5.4, 5.5, 5.6, 6.1, 6.4, 10.2, 10.3, 12.2
  */
 
-import type {
-    ActivePath,
-    GenerationMode,
-    GeneratorError,
-    TypeGraph,
-} from "./types.js";
+import type { ActivePath, GenerationMode, GeneratorError, TypeGraph } from "./types.js";
 
 // ---------------------------------------------------------------------------
 // PRNG
@@ -64,10 +59,7 @@ export function createRand(seed?: number): () => number {
  * @param rand  - The seeded `() => number` PRNG shared across the whole run.
  * @param schema - The raw JSON Schema fragment for the property being synthesized.
  */
-export type ValueGenerator = (
-  rand: () => number,
-  schema: Record<string, unknown>,
-) => unknown;
+export type ValueGenerator = (rand: () => number, schema: Record<string, unknown>) => unknown;
 
 // ---------------------------------------------------------------------------
 // UUID helper
@@ -96,9 +88,7 @@ function generateUuid(rand: () => number): string {
     return result;
   };
 
-  return `${hex(32)}-${hex(16)}-4${hex(12)}-${(
-    (Math.floor(rand() * 4) + 8).toString(16)
-  )}${hex(12)}-${hex(48)}`;
+  return `${hex(32)}-${hex(16)}-4${hex(12)}-${(Math.floor(rand() * 4) + 8).toString(16)}${hex(12)}-${hex(48)}`;
 }
 
 // ---------------------------------------------------------------------------
@@ -149,9 +139,7 @@ function generateDateTime(rand: () => number): string {
  * The `rand` parameter is threaded through every generator so the full PRNG
  * sequence is deterministic for a given seed (Requirements 5.4, 5.5, 10.4).
  */
-export function buildValueGenerators(
-  rand: () => number,
-): Map<string, ValueGenerator> {
+export function buildValueGenerators(rand: () => number): Map<string, ValueGenerator> {
   const registry = new Map<string, ValueGenerator>();
 
   // type:string — random UUID-based string
@@ -208,9 +196,7 @@ export function buildValueGenerators(
  *
  * Returns `undefined` when no generator is registered for the schema.
  */
-export function discriminatorFor(
-  schema: Record<string, unknown>,
-): string | undefined {
+export function discriminatorFor(schema: Record<string, unknown>): string | undefined {
   if ("const" in schema) return "const";
   if ("enum" in schema) return "enum";
   if (
@@ -222,10 +208,7 @@ export function discriminatorFor(
     return "pattern:CompactJws";
   }
   // Also detect via $comment (used in OB3 schema to identify CompactJws types)
-  if (
-    typeof schema.$comment === "string" &&
-    schema.$comment.includes("CompactJws")
-  ) {
+  if (typeof schema.$comment === "string" && schema.$comment.includes("CompactJws")) {
     return "pattern:CompactJws";
   }
   // BCP47 language code pattern
@@ -235,10 +218,7 @@ export function discriminatorFor(
   ) {
     return "pattern:LanguageCode";
   }
-  if (
-    typeof schema.$comment === "string" &&
-    schema.$comment.includes("LanguageCode")
-  ) {
+  if (typeof schema.$comment === "string" && schema.$comment.includes("LanguageCode")) {
     return "pattern:LanguageCode";
   }
   if (typeof schema.format === "string") {
@@ -274,20 +254,20 @@ const CLASS_TYPE_VALUES: Record<string, string | string[]> = {
   Profile: ["Profile"],
   EndorsementSubject: ["EndorsementSubject"],
   Evidence: ["Evidence"],
-  IdentityObject: "IdentityObject",  // schema requires single string IRI
-  Image: "Image",                    // schema requires single string IRI ("MUST be the IRI 'Image'")
+  IdentityObject: "IdentityObject", // schema requires single string IRI
+  Image: "Image", // schema requires single string IRI ("MUST be the IRI 'Image'")
   Result: ["Result"],
   ResultDescription: ["ResultDescription"],
   Alignment: ["Alignment"],
   RubricCriterionLevel: ["RubricCriterionLevel"],
   Related: ["Related"],
   Address: ["Address"],
-  GeoCoordinates: "GeoCoordinates",  // schema requires single string IRI
-  Proof: "DataIntegrityProof",       // schema requires single string IRI
+  GeoCoordinates: "GeoCoordinates", // schema requires single string IRI
+  Proof: "DataIntegrityProof", // schema requires single string IRI
   CredentialSchema: "1EdTechJsonSchemaValidator2019", // schema requires single string IRI
-  CredentialStatus: "StatusList2021Entry",  // schema requires single string IRI
+  CredentialStatus: "StatusList2021Entry", // schema requires single string IRI
   RefreshService: "1EdTechCredentialRefresh", // schema requires single string IRI
-  TermsOfUse: "TrustFrameworkPolicy",  // schema requires single string IRI
+  TermsOfUse: "TrustFrameworkPolicy", // schema requires single string IRI
   IdentifierEntry: "IdentifierEntry", // schema requires single string IRI
 };
 
@@ -459,8 +439,8 @@ export class CredentialSynthesizer {
     // Inject hardcoded root-level fields (Req 6.4, design spec step 6)
     const uuid = this._generateUuid();
     doc["@context"] = OB3_CONTEXT;
-    doc["type"] = CLASS_TYPE_VALUES[rootClass] ?? [rootClass];
-    doc["id"] = `https://example.org/credentials/${uuid}`;
+    doc.type = CLASS_TYPE_VALUES[rootClass] ?? [rootClass];
+    doc.id = `https://example.org/credentials/${uuid}`;
 
     return doc;
   }
@@ -518,8 +498,7 @@ export class CredentialSynthesizer {
         const targetNode = this.graph.nodes.get(targetClass);
 
         // Check if target is a URI-or-object class (ProfileRef pattern)
-        const isUriOrObject =
-          targetNode && detectUriOrObjectClass(targetNode.rawSchema) !== null;
+        const isUriOrObject = targetNode && detectUriOrObjectClass(targetNode.rawSchema) !== null;
 
         if (isUriOrObject) {
           // ProfileRef pattern (Req 3.3, 3.6)
@@ -528,7 +507,10 @@ export class CredentialSynthesizer {
             const uriValue = `https://example.org/${this._generateUuid()}`;
             if (edge.isArray) {
               const count = this._arrayCount();
-              doc[propName] = Array.from({ length: count }, () => `https://example.org/${this._generateUuid()}`);
+              doc[propName] = Array.from(
+                { length: count },
+                () => `https://example.org/${this._generateUuid()}`,
+              );
             } else {
               doc[propName] = uriValue;
             }
@@ -585,8 +567,6 @@ export class CredentialSynthesizer {
               if (mode === "full") {
                 // full mode: skip optional objects at/beyond maxDepth
               }
-              // minimal mode: not required, skip
-              continue;
             }
           } else {
             // depth < maxDepth: recurse normally
@@ -656,9 +636,7 @@ export class CredentialSynthesizer {
 
         if (isArrayScalar) {
           const count = this._arrayCount();
-          doc[propName] = Array.from({ length: count }, () =>
-            generator(this.rand, scalarSchema),
-          );
+          doc[propName] = Array.from({ length: count }, () => generator(this.rand, scalarSchema));
         } else {
           doc[propName] = generator(this.rand, scalarSchema);
         }
@@ -668,7 +646,7 @@ export class CredentialSynthesizer {
     // Inject type value for nested classes (not root — root type is injected externally)
     if (depth > 0 && className in CLASS_TYPE_VALUES) {
       const typeVal = CLASS_TYPE_VALUES[className];
-      doc["type"] = typeVal;
+      doc.type = typeVal;
     }
 
     return doc;
@@ -699,8 +677,7 @@ export class CredentialSynthesizer {
       if (edge) {
         // Required object-valued — emit a URI placeholder to avoid deep recursion
         const targetNode = this.graph.nodes.get(edge.targetClass);
-        const isUriOrObject =
-          targetNode && detectUriOrObjectClass(targetNode.rawSchema) !== null;
+        const isUriOrObject = targetNode && detectUriOrObjectClass(targetNode.rawSchema) !== null;
         if (isUriOrObject) {
           doc[propName] = `https://example.org/${this._generateUuid()}`;
         } else {
@@ -708,10 +685,17 @@ export class CredentialSynthesizer {
           const requiredOnlyVisited = visited ?? new Set<string>();
           if (requiredOnlyVisited.has(edge.targetClass)) {
             // Cycle on required edges (shouldn't happen in OB3 3.0.3 but defend).
-            doc[propName] = { id: `https://example.org/${this._generateUuid()}`, type: [edge.targetClass] };
+            doc[propName] = {
+              id: `https://example.org/${this._generateUuid()}`,
+              type: [edge.targetClass],
+            };
           } else {
             requiredOnlyVisited.add(edge.targetClass);
-            const nested = this._synthesizeNodeMinimal(edge.targetClass, [...pathStack, propName, edge.targetClass], requiredOnlyVisited);
+            const nested = this._synthesizeNodeMinimal(
+              edge.targetClass,
+              [...pathStack, propName, edge.targetClass],
+              requiredOnlyVisited,
+            );
             requiredOnlyVisited.delete(edge.targetClass);
             if (this._isError(nested)) return nested;
             doc[propName] = edge.isArray ? [nested] : nested;
@@ -743,7 +727,7 @@ export class CredentialSynthesizer {
 
     // Inject type for well-known classes
     if (className in CLASS_TYPE_VALUES) {
-      doc["type"] = CLASS_TYPE_VALUES[className];
+      doc.type = CLASS_TYPE_VALUES[className];
     }
 
     return doc;
@@ -778,10 +762,6 @@ export class CredentialSynthesizer {
   }
 
   private _isError(val: unknown): val is GeneratorError {
-    return (
-      val !== null &&
-      typeof val === "object" &&
-      (val as Record<string, unknown>).ok === false
-    );
+    return val !== null && typeof val === "object" && (val as Record<string, unknown>).ok === false;
   }
 }

@@ -12,16 +12,19 @@
 import { z } from "zod";
 import { validateJsonLd } from "../validate/jsonld.js";
 import { validateSchema } from "../validate/schema.js";
+import { getVocab } from "../vocab/index.js";
+import { loadVocab } from "../vocab/loader.js";
+import type { Vocab } from "../vocab/types.js";
 import { CoverageCollector } from "./coverage-collector.js";
 import { CredentialSynthesizer, createRand } from "./credential-synthesizer.js";
 import { MermaidRenderer } from "./mermaid-renderer.js";
 import { type BuildResult, SchemaGraphBuilder } from "./schema-graph-builder.js";
 import { TraversalEngine } from "./traversal-engine.js";
 import type {
-    GenerationConfig,
-    GenerationOutput,
-    GeneratorError,
-    GeneratorResult,
+  GenerationConfig,
+  GenerationOutput,
+  GeneratorError,
+  GeneratorResult,
 } from "./types.js";
 
 // ---------------------------------------------------------------------------
@@ -58,7 +61,7 @@ const OB3_CONTEXT_URL = "https://purl.imsglobal.org/spec/ob/v3p0/context-3.0.3.j
 
 const typeGraphCache = new Map<string, BuildResult>();
 
-function getTypeGraph(rootClass: string): BuildResult {
+function _getTypeGraph(rootClass: string): BuildResult {
   const cached = typeGraphCache.get(rootClass);
   if (cached) return cached;
 
@@ -238,4 +241,3 @@ export class CredentialGraphGenerator {
 
 export type * from "./types.js";
 export { CredentialGraphGenerator as default };
-

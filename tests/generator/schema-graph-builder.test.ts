@@ -31,7 +31,10 @@ vi.mock("node:fs", async (importOriginal) => {
         return mockFsContent;
       }
       // Delegate to real readFileSync for all other paths
-      return actual.readFileSync(path as Parameters<typeof actual.readFileSync>[0], ...(args as [BufferEncoding]));
+      return actual.readFileSync(
+        path as Parameters<typeof actual.readFileSync>[0],
+        ...(args as [BufferEncoding]),
+      );
     },
   };
 });
@@ -47,10 +50,7 @@ beforeEach(() => {
 
 function isTypeGraph(result: unknown): result is TypeGraph {
   return (
-    result !== null &&
-    typeof result === "object" &&
-    "nodes" in result &&
-    "rootClass" in result
+    result !== null && typeof result === "object" && "nodes" in result && "rootClass" in result
   );
 }
 
@@ -325,13 +325,10 @@ describe("SchemaGraphBuilder – missing $defs entry error (Req 1.9)", () => {
 
 describe("SchemaGraphBuilder – Req 1.10: file-read error takes precedence", () => {
   it("returns snapshot read error even when a class would also be absent (Req 1.10)", () => {
-    mockFsContent = Object.assign(
-      new Error("ENOENT: no such file or directory"),
-      {
-        code: "ENOENT",
-        path: "/fake/path/achievement-credential.schema.json",
-      },
-    );
+    mockFsContent = Object.assign(new Error("ENOENT: no such file or directory"), {
+      code: "ENOENT",
+      path: "/fake/path/achievement-credential.schema.json",
+    });
 
     const builder = new SchemaGraphBuilder();
     // A class that would also be absent — but file error must come first

@@ -1,8 +1,8 @@
-import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { discriminatorFor } from "../../src/generator/credential-synthesizer.js";
+import { describe, expect, it } from "vitest";
 import { resolveSnapshotPath } from "../../src/config.js";
+import { discriminatorFor } from "../../src/generator/credential-synthesizer.js";
 
 function collectByKey(obj: unknown, key: string, acc: Set<string> = new Set()): Set<string> {
   if (obj === null || typeof obj !== "object") return acc;
@@ -22,10 +22,7 @@ function hasDiscriminator(fragment: Record<string, unknown>): boolean {
   return discriminatorFor(fragment) !== undefined;
 }
 
-const schemaFiles = [
-  "achievement-credential.schema.json",
-  "endorsement-credential.schema.json",
-];
+const schemaFiles = ["achievement-credential.schema.json", "endorsement-credential.schema.json"];
 
 describe("Value generator coverage vs OB3 schemas", () => {
   for (const file of schemaFiles) {
@@ -53,10 +50,9 @@ describe("Value generator coverage vs OB3 schemas", () => {
           const fragment = { type: "string", format };
           if (!hasDiscriminator(fragment)) unresolved.push(format);
         }
-        expect(
-          unresolved,
-          `Formats without a value generator: ${unresolved.join(", ")}`,
-        ).toEqual([]);
+        expect(unresolved, `Formats without a value generator: ${unresolved.join(", ")}`).toEqual(
+          [],
+        );
       });
     });
   }
