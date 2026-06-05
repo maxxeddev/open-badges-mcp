@@ -1,5 +1,4 @@
 import { readFileSync } from "node:fs";
-import { homedir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { resolveDataDir } from "../src/cli.js";
@@ -19,19 +18,26 @@ describe("resolveDataDir", () => {
     }
   });
 
-  it("respects --data-dir override", () => {
+  it("respects --data-dir override and marks as explicit", () => {
     delete process.env.XDG_DATA_HOME;
-    expect(resolveDataDir("/custom/path")).toBe("/custom/path");
+    const result = resolveDataDir("/custom/path");
+    expect(result.dataDir).toBe("/custom/path");
+    expect(result.isExplicit).toBe(true);
   });
 
-  it("respects XDG_DATA_HOME when no override provided", () => {
+  it("respects XDG_DATA_HOME when no override provided and marks as explicit", () => {
     process.env.XDG_DATA_HOME = "/tmp/xdg";
-    expect(resolveDataDir()).toBe("/tmp/xdg/mcp-ob-ts/data");
+    const result = resolveDataDir();
+    expect(result.dataDir).toBe("/tmp/xdg/mcp-ob-ts/data");
+    expect(result.isExplicit).toBe(true);
   });
 
-  it("defaults to ~/.mcp-ob-ts/data/ when no override and no XDG_DATA_HOME", () => {
+  it("defaults to bundled data/ directory when no override and no XDG_DATA_HOME", () => {
     delete process.env.XDG_DATA_HOME;
-    expect(resolveDataDir()).toBe(join(homedir(), ".mcp-ob-ts", "data"));
+    const result = resolveDataDir();
+    // Should point to the bundled data dir relative to src/
+    expect(result.dataDir).toMatch(/data$/);
+    expect(result.isExplicit).toBe(false);
   });
 });
 
