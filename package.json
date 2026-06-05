@@ -9,6 +9,7 @@
   },
   "files": [
     "dist/",
+    "data/sources.json",
     "data/snapshots/",
     "data/index.db",
     "README.md",
@@ -23,6 +24,7 @@
     "lint:fix": "biome check --write src/ scripts/ tests/",
     "format": "biome format --write src/ scripts/ tests/",
     "test": "vitest --run",
+    "test:smoke": "tsx scripts/smoke-test-pack.ts",
     "inspect": "npx @modelcontextprotocol/inspector node dist/cli.js",
     "data:fetch": "tsx scripts/fetch-spec-data.ts",
     "data:ingest": "tsx scripts/ingest-spec.ts",
@@ -75,5 +77,17 @@
     "tests/**/*.{ts,tsx,js,jsx}": [
       "biome check --write"
     ]
-  }
+  },
+  "directories": {
+    "doc": "docs",
+    "test": "tests"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/maxxeddev/open-badges-mcp.git"
+  },
+  "bugs": {
+    "url": "https://github.com/maxxeddev/open-badges-mcp/issues"
+  },
+  "homepage": "https://github.com/maxxeddev/open-badges-mcp#readme"
 }
