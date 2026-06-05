@@ -1,5 +1,4 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { homedir } from "node:os";
 import { dirname, join } from "node:path";
 import * as cheerio from "cheerio";
 import { Parser, Store } from "n3";
@@ -37,11 +36,30 @@ const SOURCES = [
 
 // ─── Arg Parsing ────────────────────────────────────────────────────────────
 
-export function resolveDataDir(override?: string): string {
-  if (override) return override;
+/**
+ * Returns the bundled data/ directory that ships with the npm package.
+ */
+function bundledDataDir(): string {
+  return join(import.meta.dirname, "..", "data");
+}
+
+/**
+ * Resolve the data directory.
+ *
+ * Priority:
+ *   1. Explicit --data-dir flag
+ *   2. XDG_DATA_HOME env var  → $XDG_DATA_HOME/mcp-ob-ts/data
+ *   3. Bundled data/ shipped inside the npm tarball (default)
+ *
+ * Returns `{ dataDir, isExplicit }` where `isExplicit` is true when the user
+ * opted into a custom location (cases 1 & 2). The init/download flow should
+ * only run when the location is explicit or the user passes `--init`.
+ */
+export function resolveDataDir(override?: string): { dataDir: string; isExplicit: boolean } {
+  if (override) return { dataDir: override, isExplicit: true };
   const xdg = process.env.XDG_DATA_HOME;
-  if (xdg) return join(xdg, "mcp-ob-ts", "data");
-  return join(homedir(), ".mcp-ob-ts", "data");
+  if (xdg) return { dataDir: join(xdg, "mcp-ob-ts", "data"), isExplicit: true };
+  return { dataDir: bundledDataDir(), isExplicit: false };
 }
 
 export type GenerateCLIArgs = {
@@ -562,7 +580,7 @@ async function ingestData(dataDir: string): Promise<void> {
 
 async function main() {
   const args = parseArgs(process.argv.slice(2));
-  const dataDir = resolveDataDir(args.dataDir);
+  const { dataDir, isExplicit } = resolveDataDir(args.dataDir);
 
   // ─── generate-credential subcommand (Req 11.8, 11.9) ─────────────────────
   if (args.subcommand === "generate-credential") {
@@ -614,10 +632,15 @@ async function main() {
   }
   // ──────────────────────────────────────────────────────────────────────────
 
-  const needsInit = args.init || !existsSync(join(dataDir, "index.db"));
+  // Only run the download + ingest pipeline when:
+  //   1. The user explicitly passed --init, OR
+  //   2. The user opted into a custom data location (--data-dir / XDG_DATA_HOME)
+  //      AND that location doesn't have an index.db yet.
+  // In all other cases the bundled data/ directory already has everything needed.
+  const needsInit = args.init || (isExplicit && !existsSync(join(dataDir, "index.db")));
 
   if (needsInit) {
-    console.error("[mcp-ob-ts] Initializing data (first run)...");
+    console.error("[mcp-ob-ts] Initializing data...");
     try {
       await downloadData(dataDir);
       await ingestData(dataDir);
