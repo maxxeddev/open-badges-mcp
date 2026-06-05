@@ -1,6 +1,6 @@
 {
   "name": "mcp-ob-ts",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "OB3 MCP Server — exposes Open Badges 3.0 vocabulary to coding agents",
   "type": "module",
   "main": "dist/cli.js",
