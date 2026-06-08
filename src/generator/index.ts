@@ -17,6 +17,7 @@ import { loadVocab } from "../vocab/loader.js";
 import type { Vocab } from "../vocab/types.js";
 import { CoverageCollector } from "./coverage-collector.js";
 import { CredentialSynthesizer, createRand } from "./credential-synthesizer.js";
+import { enforceDateCoherency } from "./date-coherency.js";
 import { MermaidRenderer } from "./mermaid-renderer.js";
 import { type BuildResult, SchemaGraphBuilder } from "./schema-graph-builder.js";
 import { TraversalEngine } from "./traversal-engine.js";
@@ -37,6 +38,7 @@ const GenerationConfigSchema = z.object({
   seed: z.number().int().optional(),
   includeMermaid: z.boolean().default(false),
   rootClass: z.string().default("AchievementCredential"),
+  contentMode: z.enum(["uuid", "realistic"]).default("uuid"),
 });
 
 // The parsed / defaulted config type
@@ -147,7 +149,11 @@ export class CredentialGraphGenerator {
     const rand = createRand(parsedConfig.seed);
     const synthesizer = new CredentialSynthesizer(
       typeGraph,
-      { maxDepth: parsedConfig.maxDepth, mode: parsedConfig.mode },
+      {
+        maxDepth: parsedConfig.maxDepth,
+        mode: parsedConfig.mode,
+        contentMode: parsedConfig.contentMode,
+      },
       rand,
     );
 
@@ -164,6 +170,11 @@ export class CredentialGraphGenerator {
     }
 
     const document = synthesisResult as Record<string, unknown>;
+
+    // Apply date coherency post-processing for realistic mode
+    if (parsedConfig.contentMode === "realistic") {
+      enforceDateCoherency(document);
+    }
 
     // ------------------------------------------------------------------
     // Step 5: Optionally render Mermaid (Req 8.4, 8.5, 8.6)

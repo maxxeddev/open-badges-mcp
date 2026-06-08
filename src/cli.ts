@@ -70,11 +70,16 @@ export type GenerateCLIArgs = {
   includeMermaid: boolean;
   outputFile?: string;
   rootClass?: string;
+  contentMode?: "uuid" | "realistic";
 };
 
 export type ParsedArgs =
   | { subcommand: undefined; init: boolean; dataDir?: string }
-  | ({ subcommand: "generate-credential" } & GenerateCLIArgs & { init: boolean; dataDir?: string });
+  | ({ subcommand: "generate-credential" } & GenerateCLIArgs & {
+        init: boolean;
+        dataDir?: string;
+        contentMode?: "uuid" | "realistic";
+      });
 
 function parseArgs(argv: string[]): ParsedArgs {
   const init = argv.includes("--init");
@@ -103,6 +108,11 @@ function parseArgs(argv: string[]): ParsedArgs {
     const rootClassIdx = argv.indexOf("--root-class");
     const rootClass = rootClassIdx !== -1 ? argv[rootClassIdx + 1] : undefined;
 
+    const contentModeIdx = argv.indexOf("--content-mode");
+    const contentModeRaw = contentModeIdx !== -1 ? argv[contentModeIdx + 1] : undefined;
+    const contentMode: "uuid" | "realistic" | undefined =
+      contentModeRaw === "uuid" || contentModeRaw === "realistic" ? contentModeRaw : undefined;
+
     return {
       subcommand: "generate-credential",
       maxDepth,
@@ -111,6 +121,7 @@ function parseArgs(argv: string[]): ParsedArgs {
       includeMermaid,
       outputFile,
       rootClass,
+      contentMode,
       init,
       dataDir,
     };
@@ -599,6 +610,7 @@ async function main() {
         seed: args.seed,
         includeMermaid: args.includeMermaid,
         rootClass: args.rootClass,
+        contentMode: args.contentMode,
       });
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
