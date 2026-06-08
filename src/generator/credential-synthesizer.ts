@@ -11,7 +11,15 @@
  * Requirements: 3.2, 3.3, 3.4, 3.6, 5.1, 5.2, 5.3, 5.4, 5.5, 5.6, 6.1, 6.4, 10.2, 10.3, 12.2
  */
 
-import type { ActivePath, GenerationMode, GeneratorError, TypeGraph } from "./types.js";
+import { type Faker, faker as fakerInstance } from "@faker-js/faker";
+import { generateRealistic } from "./realistic-values.js";
+import type {
+  ActivePath,
+  ContentMode,
+  GenerationMode,
+  GeneratorError,
+  TypeGraph,
+} from "./types.js";
 
 // ---------------------------------------------------------------------------
 // PRNG
@@ -405,13 +413,29 @@ function extractScalarSchema(propValue: unknown): Record<string, unknown> | null
  */
 export class CredentialSynthesizer {
   private readonly generators: Map<string, ValueGenerator>;
+  private readonly contentMode: ContentMode;
+  private readonly faker: Faker;
 
   constructor(
     private readonly graph: TypeGraph,
-    private readonly config: { maxDepth: number; mode: "minimal" | "full" },
+    private readonly config: {
+      maxDepth: number;
+      mode: "minimal" | "full";
+      contentMode?: ContentMode;
+    },
     private readonly rand: () => number,
   ) {
     this.generators = buildValueGenerators(rand);
+    this.contentMode = config.contentMode ?? "uuid";
+
+    // Initialize faker with a seed for deterministic realistic values
+    this.faker = fakerInstance;
+    if (this.contentMode === "realistic") {
+      // Use the same seed concept — derive from rand() to keep sequence deterministic
+      // We call rand() once to get a seed for faker
+      const fakerSeed = Math.floor(rand() * 0xffffffff);
+      this.faker.seed(fakerSeed);
+    }
   }
 
   /**
@@ -607,6 +631,22 @@ export class CredentialSynthesizer {
           continue;
         }
 
+        // --- Realistic mode: try context-aware generation first ---
+        if (this.contentMode === "realistic") {
+          const realisticValue = generateRealistic(className, propName, scalarSchema, this.faker);
+          if (realisticValue !== undefined) {
+            if (isArrayScalar) {
+              const count = this._arrayCount();
+              doc[propName] = Array.from({ length: count }, () =>
+                generateRealistic(className, propName, scalarSchema, this.faker),
+              );
+            } else {
+              doc[propName] = realisticValue;
+            }
+            continue;
+          }
+        }
+
         const discriminator = discriminatorFor(scalarSchema);
 
         if (discriminator === undefined) {
@@ -705,6 +745,16 @@ export class CredentialSynthesizer {
         // Scalar
         const scalarSchema = extractScalarSchema(propValue);
         if (!scalarSchema) continue;
+
+        // --- Realistic mode: try context-aware generation first ---
+        if (this.contentMode === "realistic") {
+          const realisticValue = generateRealistic(className, propName, scalarSchema, this.faker);
+          if (realisticValue !== undefined) {
+            doc[propName] = realisticValue;
+            continue;
+          }
+        }
+
         const discriminator = discriminatorFor(scalarSchema);
         if (discriminator === undefined) {
           return {

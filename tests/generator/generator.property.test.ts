@@ -483,3 +483,52 @@ describe("Property 5: Seeded runs produce identical output", () => {
     );
   }, 600_000); // Generous timeout: 100 runs × 2 calls × ~2500ms each = ~500s
 });
+
+// ---------------------------------------------------------------------------
+// Property 8: Realistic content credentials pass validate_credential
+//
+// For any valid GenerationConfig with contentMode: "realistic", if the
+// generator returns a GenerationOutput, the generated credential document
+// SHALL have zero severity:"error" entries from both validateSchema AND
+// validateJsonLd.
+//
+// **Validates: realistic content mode backwards-compatible validity**
+// ---------------------------------------------------------------------------
+
+// Feature: credential-graph-generator, Property 8: realistic content credentials validate
+describe("Property 8: realistic content credentials pass validate_credential", () => {
+  it("every realistic-content credential has zero severity:error entries from both validators", async () => {
+    let successCount = 0;
+    await fc.assert(
+      fc.asyncProperty(validConfigArb, async (config) => {
+        const generator = new CredentialGraphGenerator();
+        const result = await generator.generate({ ...config, contentMode: "realistic" });
+
+        if (!isGenerationOutput(result)) return;
+        successCount++;
+
+        const doc = result.credentials[0].document;
+
+        const schemaErrors = validateSchema(doc);
+        const schemaErrorEntries = schemaErrors.filter((e) => e.severity === "error");
+        expect(
+          schemaErrorEntries,
+          `Schema errors: ${schemaErrorEntries.map((e) => `${e.path}: ${e.message}`).join(", ")}`,
+        ).toHaveLength(0);
+
+        const { errors: jsonldErrors } = await validateJsonLd(doc);
+        const jsonldErrorEntries = jsonldErrors.filter((e) => e.severity === "error");
+        expect(
+          jsonldErrorEntries,
+          `JSON-LD errors: ${jsonldErrorEntries.map((e) => `${e.path}: ${e.message}`).join(", ")}`,
+        ).toHaveLength(0);
+      }),
+      { numRuns: 50 },
+    );
+
+    expect(
+      successCount,
+      `Most configs should produce a credential, but only ${successCount}/50 did`,
+    ).toBeGreaterThanOrEqual(45);
+  }, 300_000);
+});

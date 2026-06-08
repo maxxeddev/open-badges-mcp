@@ -24,6 +24,12 @@ export const inputSchema = {
     .boolean()
     .optional()
     .describe("Include Mermaid diagram of the traversal path (default false)"),
+  contentMode: z
+    .enum(["uuid", "realistic"])
+    .optional()
+    .describe(
+      "Content mode: 'uuid' (default; fast spec-coverage with UUID values) or 'realistic' (faker-driven values for rendering-app testing)",
+    ),
 };
 
 export async function handler(args: {
@@ -31,6 +37,7 @@ export async function handler(args: {
   mode?: "minimal" | "full";
   seed?: number;
   includeMermaid?: boolean;
+  contentMode?: "uuid" | "realistic";
 }) {
   const generator = new CredentialGraphGenerator();
   const result = await generator.generate(args);

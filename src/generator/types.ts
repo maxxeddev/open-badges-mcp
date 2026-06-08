@@ -25,12 +25,15 @@ export type TypeGraph = {
 
 export type GenerationMode = "minimal" | "full";
 
+export type ContentMode = "uuid" | "realistic";
+
 export type GenerationConfig = {
   maxDepth?: number; // 0–10, default 3
   mode?: GenerationMode; // default 'minimal'
   seed?: number; // optional PRNG seed for determinism
   includeMermaid?: boolean; // default false
   rootClass?: string; // default 'AchievementCredential'
+  contentMode?: ContentMode; // default 'uuid'
 };
 
 export type GeneratedCredential = {
