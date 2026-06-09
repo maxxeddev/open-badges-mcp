@@ -10,6 +10,8 @@
  */
 
 import { z } from "zod";
+import { getMaxResponseBytes } from "../config.js";
+import { boundDocument } from "../util/output-bounding.js";
 import { validateJsonLd } from "../validate/jsonld.js";
 import { validateSchema } from "../validate/schema.js";
 import { getVocab } from "../vocab/index.js";
@@ -241,6 +243,27 @@ export class CredentialGraphGenerator {
         },
       ],
     };
+
+    // ------------------------------------------------------------------
+    // Step 9: Bound output (Req 8.1, 8.2, 8.3)
+    //
+    // Route the assembled GenerationOutput through the Output_Bounding_Utility.
+    // If the serialized response exceeds the configured cap, mark it as bounded.
+    // Determinism (Req 9.1) is preserved: the seed-based PRNG controls traversal
+    // and synthesis order; bounding is a post-hoc wrapper that does not alter
+    // the generation logic.
+    // ------------------------------------------------------------------
+    const boundResult = boundDocument(output, { maxBytes: getMaxResponseBytes() });
+
+    if (boundResult.bounded) {
+      // Return a bounded GenerationOutput with the bounded flag set and the
+      // bounding utility's payload/summary surfaced.
+      const boundedOutput: GenerationOutput = {
+        ...output,
+        bounded: true,
+      };
+      return boundedOutput;
+    }
 
     return output;
   }

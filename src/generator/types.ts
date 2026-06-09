@@ -34,6 +34,8 @@ export type GenerationConfig = {
   includeMermaid?: boolean; // default false
   rootClass?: string; // default 'AchievementCredential'
   contentMode?: ContentMode; // default 'uuid'
+  targetClasses?: string[]; // optional subset of classes to target (Req 6)
+  attachProof?: boolean; // attach a real DataIntegrityProof (Req 7), default false
 };
 
 export type GeneratedCredential = {
@@ -51,6 +53,7 @@ export type CoverageReport = {
   exercisedClasses: { count: number; total: number; percentage: number };
   exercisedProperties: { count: number; total: number; percentage: number };
   exercisedEdges: { count: number; total: number; percentage: number };
+  targetedClasses?: { requested: string[]; exercised: string[] };
 };
 
 export type GenerationOutput = {
@@ -58,6 +61,7 @@ export type GenerationOutput = {
   coverage: CoverageReport;
   version: string;
   sources: Array<{ url: string; anchor: string }>;
+  bounded?: boolean; // true when output was truncated by the Output_Bounding_Utility
 };
 
 export type GeneratorError = {

@@ -1,5 +1,7 @@
 import { z } from "zod";
+import { getMaxResponseBytes } from "../config.js";
 import { findConformanceRequirements } from "../spec/index.js";
+import { boundArray } from "../util/output-bounding.js";
 import type { Source } from "../vocab/types.js";
 
 const BASE_URLS: Record<string, string> = {
@@ -21,25 +23,62 @@ export const inputSchema = {
     .enum(["MUST", "SHOULD", "MAY"])
     .optional()
     .describe("Filter results to a specific modal verb"),
+  continuationToken: z
+    .string()
+    .optional()
+    .describe("Opaque token to retrieve the next page of results when output was bounded"),
 };
 
-export async function handler(args: { topic: string; modal?: "MUST" | "SHOULD" | "MAY" }) {
+export async function handler(args: {
+  topic: string;
+  modal?: "MUST" | "SHOULD" | "MAY";
+  continuationToken?: string;
+}) {
   const results = await findConformanceRequirements(args.topic, args.modal);
 
-  const sources: Source[] = results.map((r) => ({
-    url: buildUrl(r.spec, r.anchor),
-    anchor: r.anchor,
+  const mappedResults = results.map((r) => ({
+    sentence: r.sentence,
+    modal: r.modal,
+    sectionUrl: buildUrl(r.spec, r.anchor),
+    topicTags: r.topicTags,
+    spec: r.spec,
+    sectionId: r.sectionId,
+  }));
+
+  const bounded = boundArray(
+    mappedResults,
+    { maxBytes: getMaxResponseBytes() },
+    args.continuationToken,
+  );
+
+  if (!bounded.bounded) {
+    const sources: Source[] = results.map((r) => ({
+      url: buildUrl(r.spec, r.anchor),
+      anchor: r.anchor,
+    }));
+
+    const response = {
+      results: bounded.payload,
+      sources,
+    };
+    return {
+      content: [{ type: "text" as const, text: JSON.stringify(response, null, 2) }],
+    };
+  }
+
+  // When bounded, derive sources from the bounded payload portion
+  const boundedPayload = bounded.payload as typeof mappedResults;
+  const sources: Source[] = boundedPayload.map((r) => ({
+    url: r.sectionUrl,
+    anchor: r.sectionId,
   }));
 
   const response = {
-    results: results.map((r) => ({
-      sentence: r.sentence,
-      modal: r.modal,
-      sectionUrl: buildUrl(r.spec, r.anchor),
-      topicTags: r.topicTags,
-      spec: r.spec,
-      sectionId: r.sectionId,
-    })),
+    results: bounded.payload,
+    bounded: true,
+    continuationToken: bounded.continuationToken,
+    omitted: bounded.omitted,
+    ...(bounded.file ? { file: bounded.file } : {}),
     sources,
   };
 

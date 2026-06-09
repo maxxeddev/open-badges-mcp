@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { CreateAchievementCredentialInputT } from "../../src/create/types.js";
-import { checkWarnings } from "../../src/create/warnings.js";
+import { checkValidUntilCoherency, checkWarnings } from "../../src/create/warnings.js";
 
 const HAPPY_INPUT: CreateAchievementCredentialInputT = {
   issuer: {
@@ -193,5 +193,62 @@ describe("checkWarnings", () => {
     expect(codes).toContain("recipient_unidentifiable");
     expect(codes).toContain("criteria_narrative_short");
     expect(warnings.length).toBeGreaterThanOrEqual(4);
+  });
+});
+
+describe("checkValidUntilCoherency", () => {
+  it("returns no warning when validUntil is after validFrom", () => {
+    const warnings = checkValidUntilCoherency("2025-12-31", "2025-01-01");
+    expect(warnings).toEqual([]);
+  });
+
+  it("returns no warning when validUntil equals validFrom", () => {
+    const warnings = checkValidUntilCoherency("2025-06-15T00:00:00Z", "2025-06-15T00:00:00Z");
+    expect(warnings).toEqual([]);
+  });
+
+  it("emits valid_until_before_valid_from when validUntil is earlier", () => {
+    const warnings = checkValidUntilCoherency("2024-01-01", "2025-01-01");
+    expect(warnings).toHaveLength(1);
+    expect(warnings[0].code).toBe("valid_until_before_valid_from");
+    expect(warnings[0].param).toBe("validUntil");
+  });
+
+  it("normalizes date-only values before comparison", () => {
+    // 2024-06-01 midnight UTC is before 2024-06-02 midnight UTC
+    const warnings = checkValidUntilCoherency("2024-06-01", "2024-06-02");
+    expect(warnings).toHaveLength(1);
+    expect(warnings[0].code).toBe("valid_until_before_valid_from");
+  });
+
+  it("handles ISO-8601 full timestamps correctly", () => {
+    const warnings = checkValidUntilCoherency("2024-03-01T12:00:00Z", "2024-03-01T13:00:00Z");
+    expect(warnings).toHaveLength(1);
+    expect(warnings[0].code).toBe("valid_until_before_valid_from");
+  });
+
+  it("returns no warning when validUntil is undefined", () => {
+    const warnings = checkValidUntilCoherency(undefined, "2025-01-01");
+    expect(warnings).toEqual([]);
+  });
+
+  it("returns no warning when validFrom is undefined", () => {
+    const warnings = checkValidUntilCoherency("2025-01-01", undefined);
+    expect(warnings).toEqual([]);
+  });
+
+  it("returns no warning when both are undefined", () => {
+    const warnings = checkValidUntilCoherency(undefined, undefined);
+    expect(warnings).toEqual([]);
+  });
+
+  it("returns no warning for unparseable validUntil", () => {
+    const warnings = checkValidUntilCoherency("not-a-date", "2025-01-01");
+    expect(warnings).toEqual([]);
+  });
+
+  it("returns no warning for unparseable validFrom", () => {
+    const warnings = checkValidUntilCoherency("2025-01-01", "not-a-date");
+    expect(warnings).toEqual([]);
   });
 });

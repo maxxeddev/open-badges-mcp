@@ -1,4 +1,5 @@
 import { getDatabase } from "./db.js";
+import { buildFts4MatchQuery, buildLikePatterns, rerank, tokenizeAndFilter } from "./fuzzy.js";
 import type {
   ConformanceRequirement,
   Example,
@@ -276,6 +277,8 @@ export async function getExamples(classOrTopic: string, limit = 5): Promise<Exam
 
 /**
  * Find conformance requirements by topic, optionally filtered by modal verb.
+ * Uses fuzzy matching with FTS4 query expansion and lexical re-ranking.
+ * Results are ordered by descending relevance score.
  */
 export async function findConformanceRequirements(
   topic: string,
@@ -291,59 +294,62 @@ export async function findConformanceRequirements(
     return [];
   }
 
+  // Tokenize and filter the topic for fuzzy matching
+  const tokens = tokenizeAndFilter(topic);
+
   // Check if conformance_fts exists
   const ftsCheck = db.exec(
     "SELECT name FROM sqlite_master WHERE type='table' AND name='conformance_fts'",
   );
+  const hasFts = ftsCheck.length > 0 && ftsCheck[0].values.length > 0;
 
-  const results: ConformanceRequirement[] = [];
+  // Step 1: Fetch candidates using FTS4 MATCH or LIKE fallback
+  let candidates: ConformanceRequirement[] = [];
 
-  if (ftsCheck.length > 0 && ftsCheck[0].values.length > 0) {
-    // Use FTS search
-    const modalFilter = modal ? "AND c.modal = ?" : "";
-    const sql = `
-      SELECT c.spec, c.section_id, c.anchor, c.sentence, c.modal, c.topic_tags
-      FROM conformance_fts fts
-      JOIN conformance c ON c.rowid = fts.rowid
-      WHERE conformance_fts MATCH ? ${modalFilter}
-    `;
+  if (hasFts && tokens.length > 0) {
+    const matchQuery = buildFts4MatchQuery(tokens);
+    if (matchQuery) {
+      // Run the FTS4 OR/prefix MATCH query (no modal filter here — applied orthogonally later)
+      const sql = `
+        SELECT c.spec, c.section_id, c.anchor, c.sentence, c.modal, c.topic_tags
+        FROM conformance_fts fts
+        JOIN conformance c ON c.rowid = fts.rowid
+        WHERE conformance_fts MATCH ?
+      `;
+      const stmt = db.prepare(sql);
+      stmt.bind([matchQuery]);
 
-    const params: Array<string> = [topic];
-    if (modal) params.push(modal);
-
-    const stmt = db.prepare(sql);
-    stmt.bind(params);
-
-    while (stmt.step()) {
-      const row = stmt.getAsObject();
-      results.push({
-        spec: row.spec as string,
-        sectionId: row.section_id as string,
-        anchor: row.anchor as string,
-        sentence: row.sentence as string,
-        modal: row.modal as "MUST" | "SHOULD" | "MAY",
-        topicTags: JSON.parse(row.topic_tags as string),
-      });
+      while (stmt.step()) {
+        const row = stmt.getAsObject();
+        candidates.push({
+          spec: row.spec as string,
+          sectionId: row.section_id as string,
+          anchor: row.anchor as string,
+          sentence: row.sentence as string,
+          modal: row.modal as "MUST" | "SHOULD" | "MAY",
+          topicTags: JSON.parse(row.topic_tags as string),
+        });
+      }
+      stmt.free();
     }
-    stmt.free();
-  } else {
-    // Fallback: LIKE search on conformance table
-    const modalFilter = modal ? "AND modal = ?" : "";
+  }
+
+  // If FTS4 returned no results (or no FTS table), fall back to per-token LIKE scan
+  if (candidates.length === 0 && tokens.length > 0) {
+    const likePatterns = buildLikePatterns(tokens);
+    // Build a WHERE clause that ORs all LIKE patterns
+    const likeClauses = likePatterns.map(() => "sentence LIKE ?").join(" OR ");
     const sql = `
       SELECT spec, section_id, anchor, sentence, modal, topic_tags
       FROM conformance
-      WHERE sentence LIKE ? ${modalFilter}
+      WHERE ${likeClauses}
     `;
-
-    const params: Array<string> = [`%${topic}%`];
-    if (modal) params.push(modal);
-
     const stmt = db.prepare(sql);
-    stmt.bind(params);
+    stmt.bind(likePatterns);
 
     while (stmt.step()) {
       const row = stmt.getAsObject();
-      results.push({
+      candidates.push({
         spec: row.spec as string,
         sectionId: row.section_id as string,
         anchor: row.anchor as string,
@@ -355,5 +361,38 @@ export async function findConformanceRequirements(
     stmt.free();
   }
 
-  return results;
+  // If tokens were empty (all stopwords), try raw topic as LIKE fallback
+  if (candidates.length === 0 && tokens.length === 0) {
+    const sql = `
+      SELECT spec, section_id, anchor, sentence, modal, topic_tags
+      FROM conformance
+      WHERE sentence LIKE ?
+    `;
+    const stmt = db.prepare(sql);
+    stmt.bind([`%${topic}%`]);
+
+    while (stmt.step()) {
+      const row = stmt.getAsObject();
+      candidates.push({
+        spec: row.spec as string,
+        sectionId: row.section_id as string,
+        anchor: row.anchor as string,
+        sentence: row.sentence as string,
+        modal: row.modal as "MUST" | "SHOULD" | "MAY",
+        topicTags: JSON.parse(row.topic_tags as string),
+      });
+    }
+    stmt.free();
+  }
+
+  // Step 2: Apply modal filter orthogonally (post-filter on candidates)
+  if (modal) {
+    candidates = candidates.filter((c) => c.modal === modal);
+  }
+
+  // Step 3: Re-rank candidates by combined similarity and apply similarity floor
+  const ranked = rerank(topic, candidates, (c) => c.sentence);
+
+  // Return results ordered by descending relevance score
+  return ranked.map((r) => r.item);
 }

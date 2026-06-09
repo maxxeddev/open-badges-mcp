@@ -10,6 +10,25 @@ export function getBaseDataDir(): string {
   return join(import.meta.dirname, "..", "data");
 }
 
+/**
+ * Default maximum response size in bytes for the Output_Bounding_Utility.
+ * Configurable via MCP_OB_MAX_RESPONSE_BYTES environment variable.
+ * Default: 50 KiB — large enough for most single credentials, small enough
+ * to stay sandbox-friendly.
+ */
+export const DEFAULT_MAX_RESPONSE_BYTES = 50 * 1024; // 50 KiB
+
+export function getMaxResponseBytes(): number {
+  const env = process.env.MCP_OB_MAX_RESPONSE_BYTES;
+  if (env) {
+    const parsed = Number.parseInt(env, 10);
+    if (!Number.isNaN(parsed) && parsed > 0) {
+      return parsed;
+    }
+  }
+  return DEFAULT_MAX_RESPONSE_BYTES;
+}
+
 export function resolveSnapshotPath(version?: string): string {
   const snapshotsDir = join(getBaseDataDir(), "snapshots");
   if (version) {

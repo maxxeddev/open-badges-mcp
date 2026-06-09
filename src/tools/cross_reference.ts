@@ -1,7 +1,9 @@
 import { z } from "zod";
+import { getMaxResponseBytes } from "../config.js";
 import { getContextStore } from "../context/index.js";
 import { getExamples, searchSpec } from "../spec/index.js";
 import type { CrossReferenceResult } from "../spec/types.js";
+import { boundArray } from "../util/output-bounding.js";
 import { getVocab } from "../vocab/index.js";
 import type { Source } from "../vocab/types.js";
 
@@ -10,9 +12,13 @@ export const description =
   "Find every place a term appears across vocab records, prose sections, context terms, and examples. Groups results by source type.";
 export const inputSchema = {
   term: z.string().describe("The term to search for across vocab, prose, context, and examples"),
+  continuationToken: z
+    .string()
+    .optional()
+    .describe("Opaque token to retrieve the next page of results when output was bounded"),
 };
 
-export async function handler(args: { term: string }) {
+export async function handler(args: { term: string; continuationToken?: string }) {
   const vocab = getVocab();
   const contextStore = getContextStore();
   const sources: Source[] = [];
@@ -56,15 +62,46 @@ export async function handler(args: { term: string }) {
     sources.push({ url, anchor: ex.sectionId });
   }
 
-  const result: CrossReferenceResult & { sources: Source[] } = {
-    vocab: vocabResults,
-    prose: proseResults,
-    context: contextResults,
-    examples: exampleResults,
+  // Flatten all result groups into a single array for bounding
+  const allEntries = [
+    ...vocabResults.map((v) => ({ group: "vocab" as const, ...v })),
+    ...proseResults.map((p) => ({ group: "prose" as const, ...p })),
+    ...contextResults.map((c) => ({ group: "context" as const, ...c })),
+    ...exampleResults.map((e) => ({ group: "examples" as const, ...e })),
+  ];
+
+  const bounded = boundArray(
+    allEntries,
+    { maxBytes: getMaxResponseBytes() },
+    args.continuationToken,
+  );
+
+  if (!bounded.bounded) {
+    // Unbounded — return the original grouped structure
+    const result: CrossReferenceResult & { sources: Source[] } = {
+      vocab: vocabResults,
+      prose: proseResults,
+      context: contextResults,
+      examples: exampleResults,
+      sources,
+    };
+
+    return {
+      content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }],
+    };
+  }
+
+  // Bounded — return the bounded payload with pagination metadata
+  const response = {
+    results: bounded.payload,
+    bounded: true,
+    continuationToken: bounded.continuationToken,
+    omitted: bounded.omitted,
+    ...(bounded.file ? { file: bounded.file } : {}),
     sources,
   };
 
   return {
-    content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }],
+    content: [{ type: "text" as const, text: JSON.stringify(response, null, 2) }],
   };
 }
