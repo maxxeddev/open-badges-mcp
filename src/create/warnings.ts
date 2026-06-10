@@ -1,4 +1,20 @@
 import type { CreateAchievementCredentialInputT, Warning } from "./types.js";
+import { WARNING_VALID_UNTIL_BEFORE_VALID_FROM } from "./types.js";
+
+/**
+ * Normalizes a date string to ISO-8601 with Z suffix for comparison purposes.
+ * Duplicated from achievement.ts to avoid circular imports.
+ */
+function normalizeDateForComparison(input: string): string {
+  if (/^\d{4}-\d{2}-\d{2}$/.test(input)) {
+    return `${input}T00:00:00Z`;
+  }
+  const parsed = new Date(input);
+  if (Number.isNaN(parsed.getTime())) {
+    return input;
+  }
+  return parsed.toISOString().replace(/\.000Z$/, "Z");
+}
 
 /**
  * Runs heuristic checks on the input and produces warnings for
@@ -75,4 +91,43 @@ export function checkWarnings(input: CreateAchievementCredentialInputT): Warning
   }
 
   return warnings;
+}
+
+/**
+ * Checks whether the normalized `validUntil` is earlier than the normalized `validFrom`.
+ * Returns a warning array (empty if no issue, or a single warning if validUntil precedes validFrom).
+ *
+ * This function is designed to be called from the builder's assembly flow after dates
+ * have been resolved (validFrom may be synthesized if not supplied).
+ */
+export function checkValidUntilCoherency(
+  validUntil: string | undefined,
+  validFrom: string | undefined,
+): Warning[] {
+  if (!validUntil || !validFrom) {
+    return [];
+  }
+
+  const normalizedUntil = normalizeDateForComparison(validUntil);
+  const normalizedFrom = normalizeDateForComparison(validFrom);
+
+  const untilMs = Date.parse(normalizedUntil);
+  const fromMs = Date.parse(normalizedFrom);
+
+  // If either date is unparseable, skip the check — schema validation will catch it
+  if (Number.isNaN(untilMs) || Number.isNaN(fromMs)) {
+    return [];
+  }
+
+  if (untilMs < fromMs) {
+    return [
+      {
+        code: WARNING_VALID_UNTIL_BEFORE_VALID_FROM,
+        message: `validUntil \`${validUntil}\` is earlier than validFrom \`${validFrom}\`. The credential would be expired before it starts.`,
+        param: "validUntil",
+      },
+    ];
+  }
+
+  return [];
 }

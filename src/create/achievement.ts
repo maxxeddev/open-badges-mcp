@@ -4,6 +4,7 @@ import { validateJsonLd } from "../validate/jsonld.js";
 import { validateSchema } from "../validate/schema.js";
 import { getClassRecord } from "../vocab/index.js";
 import { translatePath } from "./path-translation.js";
+import { applyRichTier } from "./rich-tier.js";
 import type {
   CreateAchievementCredentialInputT,
   CreateAchievementCredentialOutput,
@@ -11,13 +12,13 @@ import type {
   ValidationError,
   Warning,
 } from "./types.js";
-import { checkWarnings } from "./warnings.js";
+import { checkValidUntilCoherency, checkWarnings } from "./warnings.js";
 
 /**
  * Derives the type array for a class by walking the vocab subClassOf chain.
  * Returns the chain from most general to most specific.
  */
-function deriveTypeArray(className: string): string[] {
+export function deriveTypeArray(className: string): string[] {
   const types: string[] = [];
   const visited = new Set<string>();
   const record = getClassRecord(className);
@@ -45,7 +46,7 @@ function deriveTypeArray(className: string): string[] {
  * If date-only (YYYY-MM-DD), expands to midnight UTC.
  * If already has timezone info, re-serializes as UTC.
  */
-function normalizeDate(input: string): string {
+export function normalizeDate(input: string): string {
   // Date-only pattern
   if (/^\d{4}-\d{2}-\d{2}$/.test(input)) {
     return `${input}T00:00:00Z`;
@@ -264,8 +265,14 @@ export async function createAchievementCredential(
   if (evidence) credential.evidence = evidence;
   if (image) credential.image = image;
 
+  // Apply rich-tier field mapping (result, source, alignment, related, proof, etc.)
+  applyRichTier(credential, input, synthesized);
+
   // Run warnings on the input
   const warnings: Warning[] = checkWarnings(input);
+
+  // Check validUntil coherency against the resolved validFrom
+  warnings.push(...checkValidUntilCoherency(input.validUntil, validFrom));
 
   // Validate the assembled credential
   const schemaErrors = validateSchema(credential);
