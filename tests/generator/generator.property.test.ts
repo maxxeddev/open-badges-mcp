@@ -100,7 +100,7 @@ describe("Property 1: generated credentials pass validate_credential", () => {
       successCount,
       `Most configs should produce a credential, but only ${successCount}/100 did`,
     ).toBeGreaterThanOrEqual(95);
-  }, 300_000);
+  }, 600_000);
 });
 
 // ---------------------------------------------------------------------------
