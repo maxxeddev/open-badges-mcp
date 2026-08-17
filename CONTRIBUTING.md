@@ -2,7 +2,9 @@
 
 ## Prerequisites
 
-- Node.js ≥ 20
+- Node.js 24 (Active LTS) — matches CI. The published package still supports
+  Node ≥ 20 per `engines`, but `@changesets/cli` requires `^22.11 || ^24 || >=26`,
+  so releasing needs a newer runtime than running does.
 - [pnpm](https://pnpm.io/) (corepack-managed via `packageManager` field)
 
 ## Setup
@@ -51,7 +53,7 @@ GitHub Actions runs on every push/PR to `main`:
 - Build (tsup)
 - Test (vitest)
 
-Matrix: Ubuntu + macOS, Node 20.
+Matrix: Ubuntu + macOS, Node 24.
 
 ## Releasing
 
