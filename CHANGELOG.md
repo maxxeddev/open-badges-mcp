@@ -1,5 +1,18 @@
 # mcp-ob-ts
 
+## 0.3.2
+
+### Patch Changes
+
+- Make data directory resolution explicit and conditional
+
+  `resolveDataDir()` now returns `{dataDir, isExplicit}` and a `bundledDataDir()`
+  helper was added. The server defaults to the packaged `data/` folder unless the
+  user supplies `--data-dir` or sets `XDG_DATA_HOME`, and the download/ingest init
+  flow only runs when the location is explicit or `--init` is passed. This stops a
+  globally installed or `npx`-invoked package from attempting a network fetch on
+  first run when the bundled data is already present.
+
 ## 0.3.1
 
 ### Patch Changes
