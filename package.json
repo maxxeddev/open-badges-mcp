@@ -58,14 +58,14 @@
     "@changesets/cli": "^2.31.0",
     "@types/jsonld": "^1.5.15",
     "@types/n3": "^1.26.1",
-    "@types/node": "^25.9.1",
+    "@types/node": "^26.2.0",
     "@types/sql.js": "^1.4.11",
     "fast-check": "^4.9.0",
     "husky": "^9.1.7",
     "lint-staged": "^17.3.0",
     "tsup": "^8.5.1",
     "tsx": "^4.23.12",
-    "typescript": "^6.0.3",
+    "typescript": "^7.0.2",
     "vitest": "^4.1.10"
   },
   "lint-staged": {
