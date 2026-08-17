@@ -521,51 +521,13 @@ describe("Feature: ob3-tooling-improvements, Property 2: Required rich-tier type
 // ---------------------------------------------------------------------------
 
 /**
- * Generates a key name that is guaranteed NOT to collide with any recognized
- * top-level, issuer, achievement, recipient, or evidence field.
- */
-const RECOGNIZED_TOP_LEVEL_KEYS = new Set([
-  "id",
-  "issuer",
-  "achievement",
-  "recipient",
-  "awardedDate",
-  "validFrom",
-  "validUntil",
-  "evidence",
-  "image",
-  "result",
-  "source",
-  "proof",
-  "credentialStatus",
-  "endorsement",
-  "termsOfUse",
-  "refreshService",
-  "credentialSchema",
-]);
-
-const RECOGNIZED_ISSUER_KEYS = new Set(["id", "name", "url", "email", "description", "image"]);
-
-const RECOGNIZED_ACHIEVEMENT_KEYS = new Set([
-  "id",
-  "name",
-  "description",
-  "criteria",
-  "achievementType",
-  "image",
-  "tag",
-  "alignment",
-  "related",
-]);
-
-const RECOGNIZED_RECIPIENT_KEYS = new Set(["id", "identifier"]);
-
-const RECOGNIZED_EVIDENCE_KEYS = new Set(["id", "name", "description", "narrative", "genre"]);
-
-/**
  * Arbitrary that generates unrecognized key names — keys that use only
  * alphanumeric characters with a unique prefix to guarantee they don't
  * collide with any recognized field and don't contain path-separator characters.
+ *
+ * The `_xtra_` prefix is what makes the guarantee hold: no recognized
+ * top-level, issuer, achievement, recipient, or evidence field starts with it,
+ * so no generated key can shadow a real one.
  */
 const arbitraryUnrecognizedKey = fc
   .stringMatching(/^[a-zA-Z][a-zA-Z0-9]{0,10}$/)

@@ -385,7 +385,7 @@ const typeGraphWithTargetsArb: fc.Arbitrary<{ graph: TypeGraph; targets: string[
     return fc
       .tuple(
         // For each node, generate edges
-        ...names.map((nodeName) =>
+        ...names.map(() =>
           fc.array(
             fc.record({
               targetIdx: fc.nat({ max: names.length - 1 }),
