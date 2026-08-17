@@ -18,22 +18,23 @@ import * as ping from "../src/tools/ping.js";
 const toolModules = [ping, listClasses, getClass, listProperties];
 
 describe("Property 7: Tool module interface contract", () => {
-  it.each(
-    toolModules.map((m) => [m.name, m]),
-  )('tool "%s" exports name (string), description (string), inputSchema (object), handler (function)', (_name, mod) => {
-    expect(mod).toHaveProperty("name");
-    expect(typeof mod.name).toBe("string");
-    expect(mod.name.length).toBeGreaterThan(0);
+  it.each(toolModules.map((m) => [m.name, m]))(
+    'tool "%s" exports name (string), description (string), inputSchema (object), handler (function)',
+    (_name, mod) => {
+      expect(mod).toHaveProperty("name");
+      expect(typeof mod.name).toBe("string");
+      expect(mod.name.length).toBeGreaterThan(0);
 
-    expect(mod).toHaveProperty("description");
-    expect(typeof mod.description).toBe("string");
-    expect(mod.description.length).toBeGreaterThan(0);
+      expect(mod).toHaveProperty("description");
+      expect(typeof mod.description).toBe("string");
+      expect(mod.description.length).toBeGreaterThan(0);
 
-    expect(mod).toHaveProperty("inputSchema");
-    expect(typeof mod.inputSchema).toBe("object");
-    expect(mod.inputSchema).not.toBeNull();
+      expect(mod).toHaveProperty("inputSchema");
+      expect(typeof mod.inputSchema).toBe("object");
+      expect(mod.inputSchema).not.toBeNull();
 
-    expect(mod).toHaveProperty("handler");
-    expect(typeof mod.handler).toBe("function");
-  });
+      expect(mod).toHaveProperty("handler");
+      expect(typeof mod.handler).toBe("function");
+    },
+  );
 });

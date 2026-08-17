@@ -60,21 +60,22 @@ describe("Property 8: Sources array contract for spec-data tools", () => {
     const vocab = getVocab();
     const classNames = Array.from(vocab.classesByName.keys());
 
-    it.each(
-      classNames,
-    )("class '%s' response contains sources with url and anchor fields", async (className) => {
-      const result = await getClassHandler({ name: className });
-      const parsed = JSON.parse(result.content[0].text);
+    it.each(classNames)(
+      "class '%s' response contains sources with url and anchor fields",
+      async (className) => {
+        const result = await getClassHandler({ name: className });
+        const parsed = JSON.parse(result.content[0].text);
 
-      expect(Array.isArray(parsed.sources)).toBe(true);
-      expect(parsed.sources.length).toBeGreaterThan(0);
+        expect(Array.isArray(parsed.sources)).toBe(true);
+        expect(parsed.sources.length).toBeGreaterThan(0);
 
-      for (const source of parsed.sources) {
-        expect(typeof source.url).toBe("string");
-        expect(source.url.length).toBeGreaterThan(0);
-        expect(typeof source.anchor).toBe("string");
-        expect(source.anchor.length).toBeGreaterThan(0);
-      }
-    });
+        for (const source of parsed.sources) {
+          expect(typeof source.url).toBe("string");
+          expect(source.url.length).toBeGreaterThan(0);
+          expect(typeof source.anchor).toBe("string");
+          expect(source.anchor.length).toBeGreaterThan(0);
+        }
+      },
+    );
   });
 });

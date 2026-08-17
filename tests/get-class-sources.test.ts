@@ -16,20 +16,21 @@ describe("Property 5: get_class sources contain class-specific anchor", () => {
   const vocab = getVocab();
   const classNames = Array.from(vocab.classesByName.keys());
 
-  it.each(
-    classNames,
-  )("sources for class '%s' contain an entry with URL ending in #<className> and anchor equal to class name", async (className) => {
-    const result = await handler({ name: className });
-    const parsed = JSON.parse(result.content[0].text);
+  it.each(classNames)(
+    "sources for class '%s' contain an entry with URL ending in #<className> and anchor equal to class name",
+    async (className) => {
+      const result = await handler({ name: className });
+      const parsed = JSON.parse(result.content[0].text);
 
-    expect(parsed.sources).toBeDefined();
-    expect(Array.isArray(parsed.sources)).toBe(true);
+      expect(parsed.sources).toBeDefined();
+      expect(Array.isArray(parsed.sources)).toBe(true);
 
-    const matchingSource = parsed.sources.find(
-      (s: { url: string; anchor: string }) =>
-        s.url.endsWith(`#${className}`) && s.anchor === className,
-    );
+      const matchingSource = parsed.sources.find(
+        (s: { url: string; anchor: string }) =>
+          s.url.endsWith(`#${className}`) && s.anchor === className,
+      );
 
-    expect(matchingSource).toBeDefined();
-  });
+      expect(matchingSource).toBeDefined();
+    },
+  );
 });
