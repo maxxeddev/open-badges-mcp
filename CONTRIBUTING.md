@@ -2,7 +2,9 @@
 
 ## Prerequisites
 
-- Node.js ≥ 20
+- Node.js 24 (Active LTS) — matches CI. The published package still supports
+  Node ≥ 20 per `engines`, but `@changesets/cli` requires `^22.11 || ^24 || >=26`,
+  so releasing needs a newer runtime than running does.
 - [pnpm](https://pnpm.io/) (corepack-managed via `packageManager` field)
 
 ## Setup
@@ -51,7 +53,7 @@ GitHub Actions runs on every push/PR to `main`:
 - Build (tsup)
 - Test (vitest)
 
-Matrix: Ubuntu + macOS, Node 20.
+Matrix: Ubuntu + macOS, Node 24.
 
 ## Releasing
 
@@ -72,6 +74,19 @@ Follow the prompts to select a semver bump type (`patch`, `minor`, `major`) and 
 1. Merge your PR (with its `.changeset/*.md` file) into `main`.
 2. The Release workflow detects pending changesets and opens a **"chore: version packages"** PR that bumps `package.json` and updates the changelog.
 3. When that version PR is merged, the workflow publishes to npm automatically.
+
+> **Never hand-edit `version` in `package.json`.** Changesets computes the next
+> version from the current value plus the pending changesets. A manual bump makes
+> it compute from a number that was never published, so the release skips a
+> version and the changelog silently loses an entry. Versions 0.3.2 and 0.4.0 were
+> both hand-set this way and had to be reconciled after the fact. Let the workflow
+> own that field — if a release looks wrong, fix the changesets, not the version.
+
+To preview what the pending changesets will produce without mutating anything:
+
+```bash
+pnpm changeset status
+```
 
 ### Required secrets
 
@@ -100,5 +115,9 @@ src/
 ├── spec/           # SQLite-backed spec index (sql.js)
 ├── context/        # JSON-LD context loader
 ├── vocab/          # RDF vocabulary (N3)
-└── validate/       # JSON Schema + JSON-LD validation
+├── validate/       # JSON Schema + JSON-LD validation
+├── create/         # Credential builder (rich-tier authoring)
+├── generator/      # Type-graph credential generation
+├── crypto/         # Canonicalization + signature verification
+└── util/           # Shared helpers (output bounding)
 ```

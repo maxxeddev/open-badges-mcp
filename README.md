@@ -76,7 +76,9 @@ The server exposes tools for querying the OB3 specification:
 | `resolve_term`                  | Resolve a JSON-LD term to its IRI              |
 | `cross_reference`               | Find relationships between classes             |
 | `find_conformance_requirements` | List conformance/validation rules              |
-| `validate_credential`           | Validate a credential against the OB3 schema   |
+| `validate_credential`           | Validate a credential against the OB3 schema, JSON-LD structure, and/or cryptographic signature |
+| `generate_credential`           | Generate a representative credential by walking the type graph |
+| `create_achievement_credential` | Build an unsigned credential from substantive content |
 
 ## Development
 
@@ -99,7 +101,11 @@ src/
 ├── spec/           # SQLite-backed spec index (sql.js)
 ├── context/        # JSON-LD context loader
 ├── vocab/          # RDF vocabulary (N3)
-└── validate/       # JSON Schema + JSON-LD validation
+├── validate/       # JSON Schema + JSON-LD validation
+├── create/         # Credential builder (rich-tier authoring)
+├── generator/      # Type-graph credential generation
+├── crypto/         # Canonicalization + signature verification
+└── util/           # Shared helpers (output bounding)
 ```
 
 Spec data lives in `data/snapshots/<version>/` as versioned snapshots. The SQLite index (`data/index.db`) is rebuilt from snapshots via `pnpm data:ingest`.

@@ -38,21 +38,22 @@ describe("Property 3: get_class returns complete structured record for valid nam
     expect(Array.isArray(parsed.properties)).toBe(true);
   });
 
-  it.each(
-    classNames,
-  )("class '%s' each property has name (string), range (array), description (string)", async (className) => {
-    const result = await handler({ name: className });
-    const parsed = JSON.parse(result.content[0].text);
+  it.each(classNames)(
+    "class '%s' each property has name (string), range (array), description (string)",
+    async (className) => {
+      const result = await handler({ name: className });
+      const parsed = JSON.parse(result.content[0].text);
 
-    for (const prop of parsed.properties) {
-      expect(typeof prop.name).toBe("string");
-      expect(prop.name.length).toBeGreaterThan(0);
-      expect(Array.isArray(prop.range)).toBe(true);
-      expect(prop.range.length).toBeGreaterThan(0);
-      expect(prop.range[0]).toHaveProperty("kind");
-      expect(typeof prop.description).toBe("string");
-    }
-  });
+      for (const prop of parsed.properties) {
+        expect(typeof prop.name).toBe("string");
+        expect(prop.name.length).toBeGreaterThan(0);
+        expect(Array.isArray(prop.range)).toBe(true);
+        expect(prop.range.length).toBeGreaterThan(0);
+        expect(prop.range[0]).toHaveProperty("kind");
+        expect(typeof prop.description).toBe("string");
+      }
+    },
+  );
 
   it.each(classNames)("class '%s' response contains version (string)", async (className) => {
     const result = await handler({ name: className });

@@ -1,3 +1,6 @@
 /.kiro
 node_modules/
 dist/
+
+# Runtime output from the output-bounding last-resort file writer
+data/sandbox/
