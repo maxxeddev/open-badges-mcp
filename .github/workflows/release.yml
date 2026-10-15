@@ -30,8 +30,11 @@ jobs:
                   registry-url: "https://registry.npmjs.org"
 
             # Trusted publishing (OIDC) requires npm >= 11.5.1, newer than the npm
-            # bundled with Node 24. Pin a recent npm before publishing.
-            - run: npm install -g npm@latest
+            # bundled with Node 24. Pin an exact 11.x npm (not @latest): 11.x keeps
+            # `pnpm info --json` on the object shape that @changesets/cli parses
+            # correctly, whereas npm 12.x returns an array shape that crashed
+            # getUnpublishedPackages. Paired with @changesets/cli@3.0.3.
+            - run: npm install -g npm@11.9.0
 
             - run: pnpm install --frozen-lockfile
 
